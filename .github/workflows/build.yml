@@ -48,10 +48,31 @@ jobs:
           git push --tags
         if: github.ref == 'refs/heads/main'
 
+  dependency-check:
+    needs: versioning
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      pull-requests: write
+
+    steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/dependency-review-action@v4
+          with: 
+            comment-summary-in-pr: always 
+
+  code-security-check:
+    needs: versioning
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check outdated dependencies
+      run: dart pub outdated
+
   lint:
     needs: versioning
     runs-on: ubuntu-latest
-    name: Lint
 
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +85,7 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze
-    
+
   test:
     needs: versioning
     runs-on: ubuntu-latest
@@ -103,6 +124,9 @@ jobs:
     needs: versioning
     runs-on: ubuntu-latest
     name: Build
+
+    env:
+      version: ${{ needs.versioning.outputs.version }}
 
     steps:
       - name: Checkout code
