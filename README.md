@@ -1,3 +1,5 @@
+[![CI](https://github.com/Math-Resolver/equation-solver-mobile/actions/workflows/build.yml/badge.svg)](https://github.com/Math-Resolver/equation-solver-mobile/actions/workflows/build.yml)
+
 # equation_solver_mobile
 
 A new Flutter project.
