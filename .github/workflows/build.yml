@@ -41,7 +41,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo: "::notice:: ${{ steps.version.outputs.version }}"
+          echo "::notice:: ${{ steps.version.outputs.version }}"
           git config --global user.email "${{ github.actor }}@users.noreplay.github.com"
           git config --global user.name "${{ github.actor }}"
           git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
