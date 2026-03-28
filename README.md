@@ -2,15 +2,29 @@
 
 A new Flutter project.
 
-## Getting Started
+# Getting Started
 
-This project is a starting point for a Flutter application.
+## IOS Development
 
-A few resources to get you started if this is your first Flutter project:
+Enter in directory of ios:
+```
+cd ios
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+and run `flutter run`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Android Development
+
+Enter in directory of android:
+```
+cd android
+```
+
+and run `flutter run`
+
+# To create a new package:
+
+Enter in directory `/packages` and run:
+```
+flutter create template=package package_name
+```

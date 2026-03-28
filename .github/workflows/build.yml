@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref}}
+  cancel-in-progress: true
+
+jobs:
+
+  versioning:
+    runs-on: ubuntu-latest
+    name: Versioning
+    permissions:
+      contents: write
+
+    outputs: 
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          refs: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - uses: codacy/git-version@2.8.0
+        id: version
+        with:
+          release-branch: main
+          prefix: v
+
+      - name: Tag the repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo: "::notice:: ${{ steps.version.outputs.version }}"
+          git config --global user.email "${{ github.actor }}@users.noreplay.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
+          git push --tags
+        if: github.ref == 'refs/heads/main'
+
+  lint:
+    needs: versioning
+    runs-on: ubuntu-latest
+    name: Lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:  
+          flutter-version: '3.19.0'
+          cache: true
+
+      - name: Analyze code
+        run: flutter analyze
+    
+  test:
+    needs: versioning
+    runs-on: ubuntu-latest
+    name: Tests and coverage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Install lcov
+        run: sudo apt-get install -y lcov
+
+      - name: Show coverage summary
+        run: |
+          lcov --summary coverage/lcov.info
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  build:
+    needs: versioning
+    runs-on: ubuntu-latest
+    name: Build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.10.0'
+
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build AppBundle (Play Store)
+        run: flutter build appbundle --release
+        if: github.ref == 'refs/heads/main'
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ env.version }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aab-${{ env.version }}
+          path: build/app/outputs/bundle/release/app-release.aab
