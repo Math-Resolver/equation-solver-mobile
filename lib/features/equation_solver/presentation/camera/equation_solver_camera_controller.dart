@@ -10,7 +10,7 @@ class EquationSolverCameraController {
 
   Future<void> initCamera() async {
     final cameras = await availableCameras();
-    final camera = cameras.first;
+    final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back);
     cameraController = CameraController(
       camera, 
       ResolutionPreset.medium
