@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class EquationSolvercalculatorPage extends StatefulWidget {
   final String? equation;
 
-  const EquationSolvercalculatorPage({
-    super.key,
-    required this.equation,
-  });
+  const EquationSolvercalculatorPage({super.key, required this.equation});
 
   @override
   State<EquationSolvercalculatorPage> createState() =>
@@ -51,18 +48,25 @@ class _EquationSolvercalculatorPageState
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  hintText: "Digite um problema matemático...",
-                  border: UnderlineInputBorder(),
+              child: Container(
+                height: 120,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.centerLeft,
+                child: TextField(
+                  controller: controller,
+                  maxLines: null,
+                  style: const TextStyle(fontSize: 18),
+                  decoration: const InputDecoration(
+                    hintText: "Digite um problema matemático...",
+                    border: UnderlineInputBorder(),
+                  ),
                 ),
               ),
             ),
 
             const Spacer(),
 
-            EquationSolverCalculatorKeyboard(controller: controller)
+            EquationSolverCalculatorKeyboard(controller: controller),
           ],
         ),
       ),
