@@ -1,3 +1,4 @@
+import 'package:equation_solver_mobile/drawables/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class EquationSolverCalculatorKeyboard extends StatelessWidget {
@@ -14,16 +15,23 @@ class EquationSolverCalculatorKeyboard extends StatelessWidget {
   }
 
   Widget _buildTopBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: const [
-        Text("abc"),
-        Icon(Icons.undo),
-        Icon(Icons.arrow_back),
-        Icon(Icons.arrow_forward),
-        Icon(Icons.keyboard_return),
-        Icon(Icons.backspace),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: const [
+          Text("abc"),
+          Spacer(),
+          Icon(Icons.undo, size: 18),
+          SizedBox(width: 10),
+          Icon(Icons.arrow_back, size: 18),
+          SizedBox(width: 10),
+          Icon(Icons.arrow_forward, size: 18),
+          SizedBox(width: 10),
+          Icon(Icons.keyboard_return, size: 18),
+          SizedBox(width: 10),
+          Icon(Icons.backspace, size: 18),
+        ],
+      ),
     );
   }
 
@@ -47,7 +55,7 @@ class EquationSolverCalculatorKeyboard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? Colors.blue : Colors.grey[200],
+          color: selected ? AppColors.selected : AppColors.unselected,
           borderRadius: BorderRadius.circular(20),
         ),
         alignment: Alignment.center,
@@ -61,56 +69,101 @@ class EquationSolverCalculatorKeyboard extends StatelessWidget {
 
   Widget _buildKeyboardGrid() {
     final buttons = [
-      ["(", ")", "+", "÷"],
-      ["1/x", "√", "x", "7"],
-      ["8", "9", "4", "5"],
-      ["6", "1", "2", "3"],
-      ["π", "%", "0", "="],
+      "()",
+      "+",
+      "÷",
+      "7",
+      "8",
+      "9",
+      "1/",
+      "√",
+      "x",
+      "4",
+      "5",
+      "6",
+      "²",
+      ">",
+      "-",
+      "1",
+      "2",
+      "3",
+      "π",
+      "%",
+      "+",
+      "0",
+      ",",
+      "=",
     ];
 
-    return Column(
-      children: buttons.map((row) {
-        return Row(
-          children: row.map((text) {
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: getButtonColor(text),
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                  ),
-                  onPressed: () {
-                    final selection = controller.selection;
-                    final newText = controller.text.replaceRange(
-                      selection.start,
-                      selection.end,
-                      text,
-                    );
+    return Container(
+      color: Colors.black,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: buttons.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 6,
+          childAspectRatio: 1,
+        ),
+        itemBuilder: (context, index) {
+          final text = buttons[index];
 
-                    controller.value = TextEditingValue(
-                      text: newText,
-                      selection: TextSelection.collapsed(
-                        offset: selection.start + text.length,
-                      ),
-                    );
-                  },
-                  child: Text(text),
+          return GestureDetector(
+            onTap: () {
+              final selection = controller.selection;
+              int startSelection = selection.start;
+              int endSelection = selection.end;
+              if (startSelection < 0 || endSelection < 0) {
+                startSelection = controller.text.length;
+                endSelection = controller.text.length;
+              }
+              final newText = controller.text.replaceRange(
+                startSelection,
+                endSelection,
+                text,
+              );
+              controller.value = TextEditingValue(
+                text: newText,
+                selection: TextSelection.collapsed(
+                  offset: selection.start + text.length,
                 ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.all(1),
+              decoration: BoxDecoration(
+                color: getButtonColor(text)
               ),
-            );
-          }).toList(),
-        );
-      }).toList(),
+              child: Center(
+                child: Text(text, style: const TextStyle(fontSize: 30 , fontWeight: FontWeight.bold)),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
   Color getButtonColor(String text) {
-    const numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+    const numbers = [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      ",",
+      "=",
+    ];
 
-    if (numbers.contains(text)) return Colors.blue.shade200;
-    return Colors.grey.shade300;
+    if (numbers.contains(text)) {
+      return AppColors.numbers;
+    }
+
+    return AppColors.defaultNumbers;
   }
 }

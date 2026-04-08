@@ -1,0 +1,8 @@
+import 'package:flutter/material.dart';
+
+class AppColors {
+  static const selected = Color(0xFF074D93);
+  static const unselected = Color(0xFFFFFFFF);
+  static const numbers = Color(0xFF074D93);
+  static const defaultNumbers = Color(0xFFFFFFFF);
+}

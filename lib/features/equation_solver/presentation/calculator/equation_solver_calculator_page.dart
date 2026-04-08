@@ -29,36 +29,81 @@ class _EquationSolvercalculatorPageState
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  const Text(
-                    "Calculadora",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  const Center(
+                    child: Text(
+                      "Calculadora",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      "Fechar",
-                      style: TextStyle(color: Colors.blue),
+                  Positioned(
+                    right: 20,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Text(
+                        "Fechar",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                height: 120,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                alignment: Alignment.centerLeft,
-                child: TextField(
-                  controller: controller,
-                  maxLines: null,
-                  style: const TextStyle(fontSize: 18),
-                  decoration: const InputDecoration(
-                    hintText: "Digite um problema matemático...",
-                    border: UnderlineInputBorder(),
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: controller,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 18),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.only(bottom: 0),
+                          hintText: "Digite um problema matemático..",
+                          hintStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth;
+                          const dotWidth = 2.0;
+                          const spacing = 3.0;
+
+                          final count = (width / (dotWidth + spacing)).floor();
+
+                          return Row(
+                            children: List.generate(count, (_) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: spacing),
+                                child: Container(
+                                  width: dotWidth,
+                                  height: 1,
+                                  color: Colors.grey.shade500,
+                                ),
+                              );
+                            }),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
