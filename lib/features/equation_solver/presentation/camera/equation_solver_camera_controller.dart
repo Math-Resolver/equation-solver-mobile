@@ -12,8 +12,9 @@ class EquationSolverCameraController {
     final cameras = await availableCameras();
     final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back);
     cameraController = CameraController(
-      camera, 
-      ResolutionPreset.medium
+      camera,
+      ResolutionPreset.medium,
+      enableAudio: false,
     );
     await cameraController!.initialize();
   }

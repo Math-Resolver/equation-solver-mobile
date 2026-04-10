@@ -1,4 +1,7 @@
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/widgets/equation_solver_calculator_keyboard.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/widgets/grid.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/widgets/tabs.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/widgets/toolbar.dart';
 import 'package:flutter/material.dart';
 
 class EquationSolvercalculatorPage extends StatefulWidget {
@@ -24,6 +27,7 @@ class _EquationSolvercalculatorPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F2F5),
       body: SafeArea(
         child: Column(
           children: [
@@ -111,7 +115,30 @@ class _EquationSolvercalculatorPageState
 
             const Spacer(),
 
-            EquationSolverCalculatorKeyboard(controller: controller),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      const CalculatorToolbar(),
+                      const SizedBox(height: 8),
+                      const CalculatorCategoryTabs(),
+                      const SizedBox(height: 12),
+
+                      Container(height: 1, color: Colors.grey.shade300),
+
+                      Expanded(child: CalculatorGrid(controller: controller)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
