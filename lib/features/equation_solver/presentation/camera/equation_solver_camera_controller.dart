@@ -2,27 +2,38 @@ import 'package:camera/camera.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
 
 class EquationSolverCameraController {
-  EquationSolverCameraController({required IEquationSolverRepositoryInterface repository}) 
-    : _repository = repository;
+  EquationSolverCameraController({required IEquationSolverRepositoryInterface repository})
+      : _repository = repository;
 
   final IEquationSolverRepositoryInterface _repository;
   CameraController? cameraController;
 
   Future<void> initCamera() async {
-    final cameras = await availableCameras();
-    final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back);
+    final backCamera = await _getBackCamera();
     cameraController = CameraController(
-      camera,
+      backCamera,
       ResolutionPreset.medium,
       enableAudio: false,
     );
     await cameraController!.initialize();
   }
 
+  Future<CameraDescription> _getBackCamera() async {
+    final cameras = await availableCameras();
+    return cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+  }
+
   Future<String?> captureAndRecognize() async {
-    final equationPictureFile = await cameraController!.takePicture();
-    final text = await _repository.getRecognizedText(equationPictureFile.path);
-    return text;
+    if (cameraController == null) return null;
+    try {
+      final picture = await cameraController!.takePicture();
+      return await _repository.getRecognizedText(picture.path);
+    } catch (_) {
+      return null;
+    }
   }
 
   void dispose() {

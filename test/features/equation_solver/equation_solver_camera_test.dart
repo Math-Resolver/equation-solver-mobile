@@ -1,5 +1,4 @@
 import 'package:camera/camera.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/presentation/chat/chat_assistant_chat_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_controller.dart';
@@ -10,8 +9,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockRepository extends Mock implements IEquationSolverRepositoryInterface {}
-class MockCameraController extends Mock implements CameraController {}
-class MockCameraValue extends Mock implements CameraValue {}
+class MockCameraController extends Mock implements CameraController {
+  @override
+  Future<void> dispose() async {}
+}
+class MockCameraValue extends Mock implements CameraValue {
+  @override
+  bool get isRecordingVideo => false;
+  @override
+  Size? get previewSize => const Size(640, 480);
+}
 
 class StubCameraController extends EquationSolverCameraController {
   final Future<String?> Function()? captureCallback;
@@ -50,6 +57,10 @@ void main() {
       controller = EquationSolverCameraController(repository: repository);
       cameraController = MockCameraController();
       controller.cameraController = cameraController;
+    });
+
+    tearDown(() {
+      controller.dispose();
     });
 
     test('captureAndRecognize takes a picture and returns recognized text', () async {
@@ -123,7 +134,7 @@ void main() {
       await tester.tap(find.widgetWithIcon(IconButton, Icons.calculate));
       await tester.pumpAndSettle();
 
-      expect(find.byType(EquationSolvercalculatorPage), findsOneWidget);
+      expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
     });
 
     testWidgets('tapping chat icon navigates to chat page', (WidgetTester tester) async {
@@ -162,7 +173,28 @@ void main() {
       await tester.tap(find.byType(GestureDetector));
       await tester.pumpAndSettle();
 
-      expect(find.byType(EquationSolvercalculatorPage), findsOneWidget);
+      expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
+    });
+
+    testWidgets('camera equation is loaded into calculator expression display', (WidgetTester tester) async {
+      const detectedEquation = 'x + 2 = 5';
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+        captureCallback: () async => detectedEquation,
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(GestureDetector));
+      await tester.pumpAndSettle();
+
+      expect(find.text(detectedEquation), findsOneWidget);
     });
 
     testWidgets('tapping capture button does not navigate when text is empty', (WidgetTester tester) async {
@@ -182,7 +214,7 @@ void main() {
       await tester.tap(find.byType(GestureDetector));
       await tester.pumpAndSettle();
 
-      expect(find.byType(EquationSolvercalculatorPage), findsNothing);
+      expect(find.byType(EquationSolverCalculatorPage), findsNothing);
     });
 
     testWidgets('shows flash toggle button on camera page', (WidgetTester tester) async {
@@ -238,6 +270,26 @@ void main() {
       expect(find.text('Fotografa um problema de matemática'), findsOneWidget);
     });
 
+    testWidgets('shows central focus rectangle for equation mapping', (WidgetTester tester) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate((widget) =>
+            widget is SizedBox && widget.width == 350 && widget.height == 110),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('gallery button should be present for selecting stored photos', (WidgetTester tester) async {
       controller = StubCameraController(
         repository: repository,
@@ -273,7 +325,63 @@ void main() {
       await tester.tap(find.byType(GestureDetector));
       await tester.pumpAndSettle();
 
-      expect(find.byType(EquationSolvercalculatorPage), findsOneWidget);
+      expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
+    });
+
+    testWidgets('shows hamburger menu button on camera page', (WidgetTester tester) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.menu), findsOneWidget);
+    });
+
+    testWidgets('shows instruction text above capture button with bold style and transparent black background', (WidgetTester tester) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      final textFinder = find.text('Fotografa um problema de matemática');
+      expect(textFinder, findsOneWidget);
+
+      final textWidget = tester.widget<Text>(textFinder);
+      expect(textWidget.style?.fontWeight, FontWeight.bold);
+      expect(textWidget.style?.backgroundColor, Colors.black54);
+    });
+
+    testWidgets('tapping hamburger menu button opens side drawer occupying 80% of screen width', (WidgetTester tester) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Drawer), findsOneWidget);
     });
   });
 }
