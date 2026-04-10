@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 
 class CalculatorToolbar extends StatelessWidget {
-  const CalculatorToolbar({super.key});
+  final VoidCallback onUndo;
+  final VoidCallback onMoveLeft;
+  final VoidCallback onMoveRight;
+  final VoidCallback onClear;
+  final VoidCallback onBackspace;
+
+  const CalculatorToolbar({
+    super.key,
+    required this.onUndo,
+    required this.onMoveLeft,
+    required this.onMoveRight,
+    required this.onClear,
+    required this.onBackspace,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,22 +28,25 @@ class CalculatorToolbar extends StatelessWidget {
             "abc",
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
-          _toolbarIcon(Icons.undo),
-          _toolbarIcon(Icons.arrow_back),
-          _toolbarIcon(Icons.arrow_forward),
-          _toolbarIcon(Icons.keyboard_return),
-          _toolbarIcon(Icons.backspace),
+          _toolbarIcon(icon: Icons.undo, onTap: onUndo),
+          _toolbarIcon(icon: Icons.arrow_back, onTap: onMoveLeft),
+          _toolbarIcon(icon: Icons.arrow_forward, onTap: onMoveRight),
+          _toolbarIcon(icon: Icons.keyboard_return, onTap: onClear),
+          _toolbarIcon(icon: Icons.backspace, onTap: onBackspace),
         ],
       ),
     );
   }
 
-  Widget _toolbarIcon(IconData icon) {
-    return SizedBox(
-      width: 24,
-      height: 24,
-      child: Center(
-        child: Icon(icon, size: 18),
+  Widget _toolbarIcon({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: Center(
+          child: Icon(icon, size: 18),
+        ),
       ),
     );
   }
