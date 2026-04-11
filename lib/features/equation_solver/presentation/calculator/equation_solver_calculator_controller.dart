@@ -31,12 +31,14 @@ class KeyboardType {
   final String label;
   final Set<String> symbols;
   final List<String> structures;
+  final List<String>? orderedLayout;
 
   const KeyboardType({
     required this.id,
     required this.label,
     required this.symbols,
     this.structures = const [],
+    this.orderedLayout,
   });
 }
 
@@ -44,26 +46,52 @@ class EquationSolverCalculatorController {
   static const Map<String, KeyboardType> _keyboards = {
     'basic': KeyboardType(
       id: 'basic',
-      label: 'Math',
-      symbols: {'+', '-', '×', '÷', '=', '(', ')'},
-      structures: ['√', '^'],
+      label: '+ - x ÷',
+      symbols: {
+        '+', '-', '×', '÷', '=', '1/', '>', 'x',
+        'π', '%', ',',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+      },
+      structures: ['( )', '√', '□²'],
+      orderedLayout: [
+        '( )', '+',  '÷', '7', '8', '9',
+        '1/',  '√',  'x', '4', '5', '6',
+        '□²',  '>',  '-', '1', '2', '3',
+        'π',   '%', '×', '0', ',', '=',
+      ],
+    ),
+    'functions': KeyboardType(
+      id: 'functions',
+      label: 'f(x) e log in',
+      symbols: {'f(x)', 'e', 'log', 'ln'},
+    ),
+    'trig': KeyboardType(
+      id: 'trig',
+      label: 'sin cos tan cot',
+      symbols: {'sin', 'cos', 'tan', 'cot'},
+    ),
+    'calculus': KeyboardType(
+      id: 'calculus',
+      label: 'lim dx Σ ∫ ∞',
+      symbols: {'lim', 'dx', 'Σ', '∫', '∞'},
     ),
     'abc': KeyboardType(
       id: 'abc',
       label: 'ABC',
       symbols: {
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-        'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
       },
-    ),
-    'functions': KeyboardType(
-      id: 'functions',
-      label: 'Functions',
-      symbols: {'sin', 'cos', 'tan', 'log', 'ln', 'exp'},
     ),
   };
 
-  static const List<String> _keyboardOrder = ['basic', 'abc', 'functions'];
+  static const List<String> _keyboardOrder = [
+    'basic',
+    'functions',
+    'trig',
+    'calculus',
+    'abc',
+  ];
 
   ExpressionState _state = const ExpressionState();
 
@@ -89,8 +117,11 @@ class EquationSolverCalculatorController {
   }
 
   bool isSymbolAllowed(String symbol) {
-    return activeKeyboard.symbols.contains(symbol.toLowerCase());
+    return activeKeyboard.symbols.contains(symbol) ||
+        activeKeyboard.symbols.contains(symbol.toLowerCase());
   }
+
+  KeyboardType getKeyboard(String id) => _keyboards[id]!;
 
   bool isStructureAllowed(String structure) {
     return activeKeyboard.structures.contains(structure);
@@ -102,19 +133,33 @@ class EquationSolverCalculatorController {
     }
 
     _addToHistory();
-    final newExpression = _state.expression.isEmpty
+    final pos = _state.cursorPosition;
+    final expr = _state.expression;
+    final isAtPlaceholder = expr.isNotEmpty &&
+        pos < expr.length &&
+        expr[pos] == '□';
+
+    final newExpression = expr.isEmpty
         ? symbol
-        : _state.expression.replaceRange(
-            _state.cursorPosition,
-            _state.cursorPosition,
+        : expr.replaceRange(
+            pos,
+            isAtPlaceholder ? pos + 1 : pos,
             symbol,
           );
 
     _state = _state.copyWith(
       expression: newExpression,
-      cursorPosition: _state.cursorPosition + symbol.length,
+      cursorPosition: pos + symbol.length,
     );
   }
+
+  // Maps each structure to (text to insert, cursor offset from insertion point).
+  // Cursor offset puts the cursor right before the □ placeholder.
+  static const Map<String, (String, int)> _structureInsertions = {
+    '( )': ('(□)', 1),
+    '√':   ('√□', 1),
+    '□²':  ('□²', 0),
+  };
 
   void insertStructure(String structure) {
     if (!isStructureAllowed(structure)) {
@@ -122,20 +167,17 @@ class EquationSolverCalculatorController {
     }
 
     _addToHistory();
-    const placeholder = '<>';
-    final fullStructure = '$structure$placeholder';
+    final (text, cursorOffset) =
+        _structureInsertions[structure] ?? ('$structure□', structure.length);
+    final pos = _state.cursorPosition;
 
     final newExpression = _state.expression.isEmpty
-        ? fullStructure
-        : _state.expression.replaceRange(
-            _state.cursorPosition,
-            _state.cursorPosition,
-            fullStructure,
-          );
+        ? text
+        : _state.expression.replaceRange(pos, pos, text);
 
     _state = _state.copyWith(
       expression: newExpression,
-      cursorPosition: _state.cursorPosition + structure.length,
+      cursorPosition: pos + cursorOffset,
     );
   }
 

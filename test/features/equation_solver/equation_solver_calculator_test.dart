@@ -25,6 +25,24 @@ void main() {
       expect(find.byType(GestureDetector), findsWidgets);
     });
 
+    testWidgets('tapping "Fechar" navigates to /camera without exception', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          initialRoute: '/camera/calculator',
+          routes: {
+            '/camera': (_) => const Scaffold(body: Text('Camera Page')),
+            '/camera/calculator': (_) => const EquationSolverCalculatorPage(),
+          },
+        ),
+      );
+
+      await tester.tap(find.text('Fechar'));
+      await tester.pump();
+
+      // After pop, the camera page is visible again
+      expect(find.text('Camera Page'), findsOneWidget);
+    });
+
     testWidgets('should render calculator page without errors', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -55,7 +73,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('input_set_toggle')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('active_keyboard')), findsOneWidget);
     });
@@ -80,11 +98,24 @@ void main() {
 
       final toggleButton = find.byKey(const Key('input_set_toggle'));
       await tester.tap(toggleButton);
-      await tester.pumpAndSettle();
+      await tester.pump();
       await tester.tap(toggleButton);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
+    });
+
+    testWidgets('should show abc keyboard after a single tap on abc button', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('input_set_toggle')));
+      await tester.pump();
+
+      expect(find.byKey(const Key('keyboard_abc_mode')), findsOneWidget);
     });
   });
 
@@ -107,7 +138,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('input_set_toggle')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -164,7 +195,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('cursor_right_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -200,7 +231,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('delete_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -223,9 +254,9 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('delete_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
       await tester.tap(find.byKey(const Key('delete_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -250,7 +281,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('undo_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -263,7 +294,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('undo_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -288,7 +319,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('cursor_right_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -311,7 +342,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('cursor_left_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -347,7 +378,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('clear_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
     });
@@ -360,9 +391,118 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('clear_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byKey(const Key('expression_display')), findsOneWidget);
+    });
+  });
+
+  group('Layout', () {
+    testWidgets('should show placeholder text when expression is empty', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      expect(find.text('Digite um problema matemático..'), findsOneWidget);
+    });
+
+    testWidgets('should display 4 keyboard tabs', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      expect(find.byKey(const Key('tab_basic')), findsOneWidget);
+      expect(find.byKey(const Key('tab_functions')), findsOneWidget);
+      expect(find.byKey(const Key('tab_trig')), findsOneWidget);
+      expect(find.byKey(const Key('tab_calculus')), findsOneWidget);
+    });
+
+    testWidgets('tapping tab_trig switches to trig keyboard', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('tab_trig')));
+      await tester.pump();
+
+      expect(find.byKey(const Key('keyboard_trig_mode')), findsOneWidget);
+    });
+
+    testWidgets('should have submit_button in toolbar', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      expect(find.byKey(const Key('submit_button')), findsOneWidget);
+    });
+
+    testWidgets('basic keyboard should have more than 7 symbol buttons', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      final symbolButtons = tester.widgetList(find.byKey(const Key('symbol_button'))).length;
+      expect(symbolButtons, greaterThan(7));
+    });
+  });
+
+  group('Cursor Display', () {
+    testWidgets('should show cursor widget in expression display', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      expect(find.byKey(const Key('cursor_indicator')), findsOneWidget);
+    });
+
+    testWidgets('cursor moves right after inserting a symbol', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+
+      // After inserting '7', cursor is at position 1 — before text is '7', after is ''
+      final beforeText = tester.widget<Text>(find.byKey(const Key('cursor_before')));
+      expect(beforeText.data, equals('7'));
+
+      final afterText = tester.widget<Text>(find.byKey(const Key('cursor_after')));
+      expect(afterText.data, equals(''));
+    });
+
+    testWidgets('cursor moves left via cursor_left_button', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('cursor_left_button')));
+      await tester.pump();
+
+      // After moving left, cursor is at position 0 — before is '', after is '7'
+      final beforeText = tester.widget<Text>(find.byKey(const Key('cursor_before')));
+      expect(beforeText.data, equals(''));
+
+      final afterText = tester.widget<Text>(find.byKey(const Key('cursor_after')));
+      expect(afterText.data, equals('7'));
     });
   });
 }
