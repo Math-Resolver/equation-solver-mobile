@@ -2,7 +2,12 @@ import 'package:camera/camera.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/presentation/chat/chat_assistant_chat_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_controller.dart';
-import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_focus_corner.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_camera_preview.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_capture_button.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_flash_gallery_row.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_focus_rectangle.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_instruction_text.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_menu_button.dart';
 import 'package:flutter/material.dart';
 
 class EquationSolverCameraPage extends StatefulWidget {
@@ -52,66 +57,14 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
       body: Builder(
         builder: (context) => Stack(
           children: [
-            _buildCameraPreview(camera),
-            _buildFocusRectangle(),
-            _buildInstructionText(),
+            EquationSolverCameraPreview(camera: camera),
+            const EquationSolverFocusRectangle(),
+            const EquationSolverInstructionText(),
             _buildControlButtons(),
-            _buildMenuButton(context),
+            EquationSolverMenuButton(
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCameraPreview(CameraController camera) {
-    return SizedBox.expand(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: camera.value.previewSize!.height,
-          height: camera.value.previewSize!.width,
-          child: camera.buildPreview(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFocusRectangle() {
-    return Positioned(
-      top: 225,
-      left: 20,
-      right: 20,
-      child: SizedBox(
-        width: 350,
-        height: 110,
-        child: Stack(
-          children: [
-            equationSolverFocusCorner(top: true, left: true),
-            equationSolverFocusCorner(top: true, left: false),
-            equationSolverFocusCorner(top: false, left: true),
-            equationSolverFocusCorner(top: false, left: false),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInstructionText() {
-    return Positioned(
-      bottom: 210,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black54,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Text(
-            'Fotografa um problema de matemática',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
         ),
       ),
     );
@@ -134,7 +87,7 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
                 child: _buildCalculatorButton(),
               ),
               const SizedBox(width: 20),
-              _buildCaptureButton(),
+              EquationSolverCaptureButton(onTap: _handleCapture),
               const SizedBox(width: 20),
               SizedBox(
                 width: 90,
@@ -143,7 +96,11 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildFlashAndGalleryIcons(),
+          EquationSolverFlashGalleryRow(
+            flashEnabled: _flashEnabled,
+            onFlashToggle: _toggleFlash,
+            onGalleryPick: _handleGalleryPick,
+          ),
         ],
       ),
     );
@@ -165,49 +122,6 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
     );
   }
 
-  Widget _buildCaptureButton() {
-    return GestureDetector(
-      key: const Key('capture_button'),
-      onTap: _handleCapture,
-      child: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.red, width: 4),
-        ),
-        child: const Center(
-          child: CircleAvatar(radius: 25, backgroundColor: Colors.red),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFlashAndGalleryIcons() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.photo_library, color: Colors.white),
-          onPressed: _handleGalleryPick,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        const SizedBox(width: 40),
-        IconButton(
-          icon: Icon(
-            Icons.flash_on,
-            color: _flashEnabled ? Colors.yellow : Colors.white,
-          ),
-          onPressed: _toggleFlash,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-      ],
-    );
-  }
-
   Widget _buildChatButton() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -221,17 +135,6 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ],
-    );
-  }
-
-  Widget _buildMenuButton(BuildContext context) {
-    return Positioned(
-      top: 40,
-      left: 10,
-      child: IconButton(
-        icon: const Icon(Icons.menu, color: Colors.white, size: 30),
-        onPressed: () => Scaffold.of(context).openDrawer(),
-      ),
     );
   }
 
