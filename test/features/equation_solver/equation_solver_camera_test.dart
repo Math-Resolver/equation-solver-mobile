@@ -9,15 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockRepository extends Mock implements IEquationSolverRepositoryInterface {}
-class MockCameraController extends Mock implements CameraController {
-  @override
-  Future<void> dispose() async {}
-}
+class MockCameraController extends Mock implements CameraController {}
 class MockCameraValue extends Mock implements CameraValue {
   @override
   bool get isRecordingVideo => false;
-  @override
-  Size? get previewSize => const Size(640, 480);
 }
 
 class StubCameraController extends EquationSolverCameraController {
@@ -25,10 +20,10 @@ class StubCameraController extends EquationSolverCameraController {
   final Future<void> Function()? initCallback;
 
   StubCameraController({
-    required IEquationSolverRepositoryInterface repository,
+    required super.repository,
     this.captureCallback,
     this.initCallback,
-  }) : super(repository: repository);
+  });
 
   @override
   Future<void> initCamera() async {
@@ -47,6 +42,10 @@ class StubCameraController extends EquationSolverCameraController {
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FlashMode.off);
+  });
+
   group('EquationSolverCameraController use cases', () {
     late MockRepository repository;
     late EquationSolverCameraController controller;
@@ -57,6 +56,7 @@ void main() {
       controller = EquationSolverCameraController(repository: repository);
       cameraController = MockCameraController();
       controller.cameraController = cameraController;
+      when(() => cameraController.dispose()).thenAnswer((_) async {});
     });
 
     tearDown(() {
@@ -103,6 +103,9 @@ void main() {
       cameraValue = MockCameraValue();
       when(() => cameraValue.isInitialized).thenReturn(true);
       when(() => cameraValue.previewSize).thenReturn(const Size(640, 480));
+      when(() => cameraController.buildPreview()).thenReturn(const SizedBox());
+      when(() => cameraController.dispose()).thenAnswer((_) async {});
+      when(() => cameraController.setFlashMode(any())).thenAnswer((_) async {});
     });
 
     testWidgets('shows loading indicator while camera is initializing', (WidgetTester tester) async {
@@ -170,7 +173,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(GestureDetector));
+      await tester.tap(find.byKey(const Key('capture_button')));
       await tester.pumpAndSettle();
 
       expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
@@ -191,7 +194,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(GestureDetector));
+      await tester.tap(find.byKey(const Key('capture_button')));
       await tester.pumpAndSettle();
 
       expect(find.text(detectedEquation), findsOneWidget);
@@ -211,7 +214,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(GestureDetector));
+      await tester.tap(find.byKey(const Key('capture_button')));
       await tester.pumpAndSettle();
 
       expect(find.byType(EquationSolverCalculatorPage), findsNothing);
@@ -304,7 +307,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.photo_library), findsOneWidget);
-      expect(find.byType(GestureDetector), findsOneWidget);
+      expect(find.byKey(const Key('capture_button')), findsOneWidget);
       expect(find.text('Fotografa um problema de matemática'), findsOneWidget);
     });
 
@@ -322,7 +325,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(GestureDetector));
+      await tester.tap(find.byKey(const Key('capture_button')));
       await tester.pumpAndSettle();
 
       expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
@@ -362,7 +365,12 @@ void main() {
 
       final textWidget = tester.widget<Text>(textFinder);
       expect(textWidget.style?.fontWeight, FontWeight.bold);
-      expect(textWidget.style?.backgroundColor, Colors.black54);
+
+      final container = tester.widget<Container>(
+        find.ancestor(of: textFinder, matching: find.byType(Container)).first,
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, Colors.black54);
     });
 
     testWidgets('tapping hamburger menu button opens side drawer occupying 80% of screen width', (WidgetTester tester) async {

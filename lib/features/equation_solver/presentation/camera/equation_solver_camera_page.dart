@@ -16,6 +16,7 @@ class EquationSolverCameraPage extends StatefulWidget {
 
 class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   late final controller = widget.controller;
+  bool _flashEnabled = false;
 
   @override
   void initState() {
@@ -42,41 +43,34 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-      ),
       drawer: Drawer(
         child: Container(
           width: MediaQuery.of(context).size.width * 0.8,
           color: Colors.white,
         ),
       ),
-      body: Stack(
-        children: [
-          _buildCameraPreview(camera),
-          _buildFocusRectangle(),
-          _buildInstructionText(),
-          _buildControlButtons(),
-        ],
+      body: Builder(
+        builder: (context) => Stack(
+          children: [
+            _buildCameraPreview(camera),
+            _buildFocusRectangle(),
+            _buildInstructionText(),
+            _buildControlButtons(),
+            _buildMenuButton(context),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCameraPreview(CameraController camera) {
-    final textureId = camera.textureId;
     return SizedBox.expand(
       child: FittedBox(
         fit: BoxFit.cover,
         child: SizedBox(
           width: camera.value.previewSize!.height,
           height: camera.value.previewSize!.width,
-          child: textureId != null ? Texture(textureId: textureId) : const SizedBox(),
+          child: camera.buildPreview(),
         ),
       ),
     );
@@ -103,14 +97,21 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   }
 
   Widget _buildInstructionText() {
-    return const Positioned(
-      bottom: 180,
+    return Positioned(
+      bottom: 210,
       left: 0,
       right: 0,
       child: Center(
-        child: Text(
-          'Fotografa um problema de matemática',
-          style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontWeight: FontWeight.bold),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Text(
+            'Fotografa um problema de matemática',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ),
       ),
     );
@@ -118,33 +119,55 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
 
   Widget _buildControlButtons() {
     return Positioned(
-      bottom: 40,
+      bottom: 60,
       left: 0,
       right: 0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildCalculatorButton(),
-          const SizedBox(width: 32),
-          _buildCaptureButton(),
-          const SizedBox(width: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 90,
+                child: _buildCalculatorButton(),
+              ),
+              const SizedBox(width: 20),
+              _buildCaptureButton(),
+              const SizedBox(width: 20),
+              SizedBox(
+                width: 90,
+                child: _buildChatButton(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _buildFlashAndGalleryIcons(),
-          const SizedBox(width: 32),
-          _buildChatButton(),
         ],
       ),
     );
   }
 
   Widget _buildCalculatorButton() {
-    return IconButton(
-      icon: const Icon(Icons.calculate, color: Colors.white),
-      onPressed: () => _navigateTo(const EquationSolverCalculatorPage()),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.calculate, color: Colors.white),
+          onPressed: () => _navigateTo(const EquationSolverCalculatorPage()),
+        ),
+        const Text(
+          'Calculadora',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
   Widget _buildCaptureButton() {
     return GestureDetector(
+      key: const Key('capture_button'),
       onTap: _handleCapture,
       child: Container(
         width: 70,
@@ -161,26 +184,76 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   }
 
   Widget _buildFlashAndGalleryIcons() {
-    return Column(
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      children: const [
-        Icon(Icons.flash_on, color: Colors.white),
-        SizedBox(width: 20),
-        Icon(Icons.photo_library, color: Colors.white),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.photo_library, color: Colors.white),
+          onPressed: _handleGalleryPick,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+        const SizedBox(width: 40),
+        IconButton(
+          icon: Icon(
+            Icons.flash_on,
+            color: _flashEnabled ? Colors.yellow : Colors.white,
+          ),
+          onPressed: _toggleFlash,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
       ],
     );
   }
 
   Widget _buildChatButton() {
-    return IconButton(
-      icon: const Icon(Icons.question_answer_outlined, color: Colors.white),
-      onPressed: () => _navigateTo(const ChatAssistantChatPage(equation: '')),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.question_answer_outlined, color: Colors.white),
+          onPressed: () => _navigateTo(const ChatAssistantChatPage(equation: '')),
+        ),
+        const Text(
+          'Chat',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
+  }
+
+  Widget _buildMenuButton(BuildContext context) {
+    return Positioned(
+      top: 40,
+      left: 10,
+      child: IconButton(
+        icon: const Icon(Icons.menu, color: Colors.white, size: 30),
+        onPressed: () => Scaffold.of(context).openDrawer(),
+      ),
+    );
+  }
+
+  void _toggleFlash() {
+    setState(() => _flashEnabled = !_flashEnabled);
+    controller.cameraController?.setFlashMode(
+      _flashEnabled ? FlashMode.torch : FlashMode.off,
+    );
+  }
+
+  Future<void> _handleGalleryPick() async {
+    final text = await controller.pickFromGalleryAndRecognize();
+    var textIsNotNullOrEmpty = mounted && text != null && text.isNotEmpty;
+    if (textIsNotNullOrEmpty) {
+      _navigateTo(EquationSolverCalculatorPage(initialExpression: text));
+    }
   }
 
   Future<void> _handleCapture() async {
     final text = await controller.captureAndRecognize();
-    if (mounted && text != null && text.isNotEmpty) {
+    var textIsNotNullOrEmpty = mounted && text != null && text.isNotEmpty;
+    if (textIsNotNullOrEmpty) {
       _navigateTo(EquationSolverCalculatorPage(initialExpression: text));
     }
   }

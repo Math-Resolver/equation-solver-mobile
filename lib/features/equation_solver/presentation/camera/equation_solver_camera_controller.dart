@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EquationSolverCameraController {
   EquationSolverCameraController({required IEquationSolverRepositoryInterface repository})
@@ -31,6 +32,17 @@ class EquationSolverCameraController {
     try {
       final picture = await cameraController!.takePicture();
       return await _repository.getRecognizedText(picture.path);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> pickFromGalleryAndRecognize() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return null;
+      return await _repository.getRecognizedText(image.path);
     } catch (_) {
       return null;
     }
