@@ -8,10 +8,12 @@ class EquationSolverCalculatorPage extends StatefulWidget {
   const EquationSolverCalculatorPage({this.initialExpression, super.key});
 
   @override
-  State<EquationSolverCalculatorPage> createState() => _EquationSolverCalculatorPageState();
+  State<EquationSolverCalculatorPage> createState() =>
+      _EquationSolverCalculatorPageState();
 }
 
-class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorPage> {
+class _EquationSolverCalculatorPageState
+    extends State<EquationSolverCalculatorPage> {
   late EquationSolverCalculatorController _controller;
 
   @override
@@ -23,7 +25,8 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
 
   void _loadInitialExpression() {
     final expression = widget.initialExpression;
-    final expressionIsNotNullOrEmpty = expression != null && expression.isNotEmpty;
+    final expressionIsNotNullOrEmpty =
+        expression != null && expression.isNotEmpty;
     if (expressionIsNotNullOrEmpty) {
       _controller.loadExpression(expression);
     }
@@ -39,16 +42,10 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
             Expanded(
               child: Column(
                 children: [
-                  Expanded(
-                    flex: 6,
-                    child: _buildExpressionDisplay(),
-                  ),
+                  Expanded(flex: 6, child: _buildExpressionDisplay()),
                   _buildControlButtons(),
                   _buildTabRow(),
-                  Expanded(
-                    flex: 4,
-                    child: _buildKeyboard(),
-                  ),
+                  Expanded(flex: 4, child: _buildKeyboard()),
                 ],
               ),
             ),
@@ -66,10 +63,7 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
           Center(
             child: const Text(
               'Calculadora',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
           Positioned(
@@ -106,25 +100,43 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
         alignment: Alignment.topLeft,
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              before,
-              key: const Key('cursor_before'),
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
+            Flexible(
+              child: Text(
+                before,
+                key: const Key('cursor_before'),
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
             ),
             _BlinkingCursor(key: const Key('cursor_indicator')),
             if (isEmpty)
-              Text(
-                'Digite um problema matemático..',
-                style: TextStyle(fontSize: 16, color: AppColors.placeholderText),
+              Flexible(
+                child: Text(
+                  'Digite um problema matemático..',
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.placeholderText,
+                  ),
+                ),
               )
             else
-              Text(
-                after,
-                key: const Key('cursor_after'),
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              Flexible(
+                child: Text(
+                  after,
+                  key: const Key('cursor_after'),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
               ),
           ],
         ),
@@ -135,61 +147,67 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
   Widget _buildControlButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          TextButton(
-            key: const Key('input_set_toggle'),
-            onPressed: () => _setState(() => _controller.switchKeyboard('abc')),
-            child: const Text(
-              'abc',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          key: const Key('control_buttons_scroll'),
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                TextButton(
+                  key: const Key('input_set_toggle'),
+                  onPressed: () =>
+                      _setState(() => _controller.switchKeyboard('abc')),
+                  child: const Text(
+                    'abc',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                _buildIconButton(
+                  'undo_button',
+                  Icons.history,
+                  () => _setState(() => _controller.undo()),
+                ),
+                _buildIconButton(
+                  'cursor_left_button',
+                  Icons.arrow_back,
+                  () => _setState(() => _controller.moveCursorLeft()),
+                ),
+                _buildIconButton(
+                  'cursor_right_button',
+                  Icons.arrow_forward,
+                  () => _setState(() => _controller.moveCursorRight()),
+                ),
+                _buildIconButton('submit_button', Icons.keyboard_return, () {}),
+                _buildIconButton(
+                  'delete_button',
+                  Icons.backspace_outlined,
+                  () => _setState(() => _controller.deleteCharacter()),
+                ),
+                Visibility(
+                  visible: false,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  maintainInteractivity: true,
+                  child: _buildIconButton(
+                    'clear_button',
+                    Icons.clear,
+                    () => _setState(() => _controller.clear()),
+                  ),
+                ),
+              ],
             ),
           ),
-          _buildIconButton(
-            'undo_button',
-            Icons.history,
-            () => _setState(() => _controller.undo()),
-          ),
-          _buildIconButton(
-            'cursor_left_button',
-            Icons.arrow_back,
-            () => _setState(() => _controller.moveCursorLeft()),
-          ),
-          _buildIconButton(
-            'cursor_right_button',
-            Icons.arrow_forward,
-            () => _setState(() => _controller.moveCursorRight()),
-          ),
-          _buildIconButton('submit_button', Icons.keyboard_return, () {}),
-          _buildIconButton(
-            'delete_button',
-            Icons.backspace_outlined,
-            () => _setState(() => _controller.deleteCharacter()),
-          ),
-          Visibility(
-            visible: false,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            maintainInteractivity: true,
-            child: _buildIconButton(
-              'clear_button',
-              Icons.clear,
-              () => _setState(() => _controller.clear()),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildIconButton(String key, IconData icon, VoidCallback onPressed) {
-    return IconButton(
-      key: Key(key),
-      icon: Icon(icon),
-      onPressed: onPressed,
-    );
+    return IconButton(key: Key(key), icon: Icon(icon), onPressed: onPressed);
   }
 
   Widget _buildTabRow() {
@@ -197,9 +215,7 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(
-        children: tabIds.map(_buildTab).toList(),
-      ),
+      child: Row(children: tabIds.map(_buildTab).toList()),
     );
   }
 
@@ -282,11 +298,9 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: () => _setState(() => _controller.insertSymbol(symbols[index])),
-          child: Text(
-            symbols[index],
-            key: const Key('symbol_button'),
-          ),
+          onPressed: () =>
+              _setState(() => _controller.insertSymbol(symbols[index])),
+          child: Text(symbols[index], key: const Key('symbol_button')),
         ),
       ),
     );
@@ -303,12 +317,12 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
       padding: const EdgeInsets.all(padding),
       child: Column(
         children: [
-          for (var r = 0; r < rows; r++) ...[  
+          for (var r = 0; r < rows; r++) ...[
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (var c = 0; c < cols; c++) ...[  
+                  for (var c = 0; c < cols; c++) ...[
                     Expanded(
                       child: _buildOrderedButton(
                         label: orderedLayout[r * cols + c],
@@ -336,10 +350,16 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
     final isStructure = keyboard.structures.contains(label);
     final isRightColumn = col >= 3;
     final isDigit = int.tryParse(label) != null;
-    final bgColor = isRightColumn ? AppColors.keyboardNumbers : AppColors.keyboardOperator;
+    final bgColor = isRightColumn
+        ? AppColors.keyboardNumbers
+        : AppColors.keyboardOperator;
     final textColor = isRightColumn ? Colors.white : Colors.black87;
-    final widgetKey = isStructure ? Key('structure_button_$label') : Key('symbol_button_$label');
-    final childKey = isStructure ? const Key('structure_button') : const Key('symbol_button');
+    final widgetKey = isStructure
+        ? Key('structure_button_$label')
+        : Key('symbol_button_$label');
+    final childKey = isStructure
+        ? const Key('structure_button')
+        : const Key('symbol_button');
     final onTap = isStructure
         ? () => _setState(() => _controller.insertStructure(label))
         : () => _setState(() => _controller.insertSymbol(label));
@@ -351,9 +371,7 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
         foregroundColor: textColor,
         elevation: 0,
         padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       onPressed: onTap,
       child: Text(
@@ -391,11 +409,9 @@ class _EquationSolverCalculatorPageState extends State<EquationSolverCalculatorP
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: () => _setState(() => _controller.insertStructure(structures[index])),
-          child: Text(
-            structures[index],
-            key: const Key('structure_button'),
-          ),
+          onPressed: () =>
+              _setState(() => _controller.insertStructure(structures[index])),
+          child: Text(structures[index], key: const Key('structure_button')),
         ),
       ),
     );

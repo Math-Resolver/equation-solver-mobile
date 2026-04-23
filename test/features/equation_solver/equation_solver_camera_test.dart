@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/presentation/chat/chat_assistant_chat_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
@@ -6,10 +8,14 @@ import 'package:equation_solver_mobile/features/equation_solver/presentation/cam
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:mocktail/mocktail.dart';
 
-class MockRepository extends Mock implements IEquationSolverRepositoryInterface {}
+class MockRepository extends Mock
+    implements IEquationSolverRepositoryInterface {}
+
 class MockCameraController extends Mock implements CameraController {}
+
 class MockCameraValue extends Mock implements CameraValue {
   @override
   bool get isRecordingVideo => false;
@@ -33,7 +39,10 @@ class StubCameraController extends EquationSolverCameraController {
   }
 
   @override
-  Future<String?> captureAndRecognize() async {
+  Future<String?> captureAndRecognize({
+    Size? viewportSize,
+    Rect? focusRect,
+  }) async {
     if (captureCallback != null) {
       return captureCallback!();
     }
@@ -63,20 +72,71 @@ void main() {
       controller.dispose();
     });
 
-    test('captureAndRecognize takes a picture and returns recognized text', () async {
-      const picturePath = 'fake_path.jpg';
-      final picture = XFile(picturePath);
+    test(
+      'captureAndRecognize takes a picture and returns recognized text',
+      () async {
+        const picturePath = 'fake_path.jpg';
+        final picture = XFile(picturePath);
 
-      when(() => cameraController.takePicture()).thenAnswer((_) async => picture);
-      when(() => repository.getRecognizedText(picturePath))
-          .thenAnswer((_) async => 'x + 2 = 5');
+        when(
+          () => cameraController.takePicture(),
+        ).thenAnswer((_) async => picture);
+        when(
+          () => repository.getRecognizedText(picturePath),
+        ).thenAnswer((_) async => 'x + 2 = 5');
 
-      final result = await controller.captureAndRecognize();
+        final result = await controller.captureAndRecognize();
 
-      expect(result, 'x + 2 = 5');
-      verify(() => cameraController.takePicture()).called(1);
-      verify(() => repository.getRecognizedText(picturePath)).called(1);
-    });
+        expect(result, 'x + 2 = 5');
+        verify(() => cameraController.takePicture()).called(1);
+        verify(() => repository.getRecognizedText(picturePath)).called(1);
+      },
+    );
+
+    test(
+      'captureAndRecognize crops the captured image to the focus area before OCR',
+      () async {
+        final tempDirectory = await Directory.systemTemp.createTemp(
+          'equation_solver_camera_test',
+        );
+        addTearDown(() => tempDirectory.delete(recursive: true));
+
+        final sourceImage = img.Image(width: 1000, height: 2000);
+        final picturePath =
+            '${tempDirectory.path}${Platform.pathSeparator}capture.jpg';
+        final pictureFile = File(picturePath);
+        await pictureFile.writeAsBytes(img.encodeJpg(sourceImage));
+
+        when(
+          () => cameraController.takePicture(),
+        ).thenAnswer((_) async => XFile(picturePath));
+        when(
+          () => repository.getRecognizedText(any()),
+        ).thenAnswer((_) async => 'cropped equation');
+
+        final result = await controller.captureAndRecognize(
+          viewportSize: const Size(400, 800),
+          focusRect: const Rect.fromLTWH(20, 225, 360, 110),
+        );
+
+        expect(result, 'cropped equation');
+
+        final recognizedPath =
+            verify(
+                  () => repository.getRecognizedText(captureAny()),
+                ).captured.single
+                as String;
+
+        expect(recognizedPath, isNot(picturePath));
+
+        final croppedImage = img.decodeImage(
+          await File(recognizedPath).readAsBytes(),
+        );
+        expect(croppedImage, isNotNull);
+        expect(croppedImage!.width, 900);
+        expect(croppedImage.height, 275);
+      },
+    );
 
     test('dispose forwards dispose to the underlying camera controller', () {
       when(() => cameraController.dispose()).thenAnswer((_) async {});
@@ -86,9 +146,12 @@ void main() {
       verify(() => cameraController.dispose()).called(1);
     });
 
-    test('initCamera is defined and accessible without invoking platform camera', () {
-      expect(controller.initCamera, isA<Function>());
-    });
+    test(
+      'initCamera is defined and accessible without invoking platform camera',
+      () {
+        expect(controller.initCamera, isA<Function>());
+      },
+    );
   });
 
   group('EquationSolverCameraPage widget use cases', () {
@@ -108,7 +171,9 @@ void main() {
       when(() => cameraController.setFlashMode(any())).thenAnswer((_) async {});
     });
 
-    testWidgets('shows loading indicator while camera is initializing', (WidgetTester tester) async {
+    testWidgets('shows loading indicator while camera is initializing', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -121,7 +186,9 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('tapping calculator icon navigates to calculator page', (WidgetTester tester) async {
+    testWidgets('tapping calculator icon navigates to calculator page', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -135,12 +202,15 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithIcon(IconButton, Icons.calculate));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
     });
 
-    testWidgets('tapping chat icon navigates to chat page', (WidgetTester tester) async {
+    testWidgets('tapping chat icon navigates to chat page', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -153,54 +223,66 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithIcon(IconButton, Icons.question_answer_outlined));
+      await tester.tap(
+        find.widgetWithIcon(IconButton, Icons.question_answer_outlined),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(ChatAssistantChatPage), findsOneWidget);
     });
 
-    testWidgets('tapping capture button navigates to calculator when text is returned', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-        captureCallback: () async => 'x + 2 = 5',
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'tapping capture button navigates to calculator when text is returned',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+          captureCallback: () async => 'x + 2 = 5',
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('capture_button')));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('capture_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
-    });
+        expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
+      },
+    );
 
-    testWidgets('camera equation is loaded into calculator expression display', (WidgetTester tester) async {
-      const detectedEquation = 'x + 2 = 5';
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-        captureCallback: () async => detectedEquation,
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'camera equation is loaded into calculator expression display',
+      (WidgetTester tester) async {
+        const detectedEquation = 'x + 2 = 5';
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+          captureCallback: () async => detectedEquation,
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('capture_button')));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('capture_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text(detectedEquation), findsOneWidget);
-    });
+        expect(find.text(detectedEquation), findsOneWidget);
+      },
+    );
 
-    testWidgets('tapping capture button does not navigate when text is empty', (WidgetTester tester) async {
+    testWidgets('tapping capture button does not navigate when text is empty', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -215,12 +297,15 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('capture_button')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byType(EquationSolverCalculatorPage), findsNothing);
     });
 
-    testWidgets('shows flash toggle button on camera page', (WidgetTester tester) async {
+    testWidgets('shows flash toggle button on camera page', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -236,64 +321,55 @@ void main() {
       expect(find.byIcon(Icons.flash_on), findsOneWidget);
     });
 
-    testWidgets('tapping flash button should enable phone flash when taking a photo', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-        captureCallback: () async => 'x + 2 = 5',
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'tapping flash button should enable phone flash when taking a photo',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+          captureCallback: () async => 'x + 2 = 5',
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.flash_on));
-      await tester.pump();
+        await tester.tap(find.byIcon(Icons.flash_on));
+        await tester.pump();
 
-      expect(find.byIcon(Icons.flash_on), findsOneWidget);
-    });
+        expect(find.byIcon(Icons.flash_on), findsOneWidget);
+      },
+    );
 
-    testWidgets('shows gallery import icon and live focus overlay on camera page', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'shows gallery import icon and live focus overlay on camera page',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.photo_library), findsOneWidget);
-      expect(find.text('Fotografa um problema de matemática'), findsOneWidget);
-    });
+        expect(find.byIcon(Icons.photo_library), findsOneWidget);
+        expect(
+          find.text('Fotografa um problema de matemática'),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('shows central focus rectangle for equation mapping', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
-
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byWidgetPredicate((widget) =>
-            widget is SizedBox && widget.width == 350 && widget.height == 110),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('gallery button should be present for selecting stored photos', (WidgetTester tester) async {
+    testWidgets('shows central focus rectangle for equation mapping', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -306,32 +382,62 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.photo_library), findsOneWidget);
-      expect(find.byKey(const Key('capture_button')), findsOneWidget);
-      expect(find.text('Fotografa um problema de matemática'), findsOneWidget);
+      final focusRectangle = find.byKey(const Key('camera_focus_rectangle'));
+      expect(focusRectangle, findsOneWidget);
+      expect(tester.getSize(focusRectangle), const Size(760, 110));
     });
 
-    testWidgets('tapping capture button with multiple equations still navigates', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-        captureCallback: () async => 'x + 2 = 5\ny = 3',
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'gallery button should be present for selecting stored photos',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('capture_button')));
-      await tester.pumpAndSettle();
+        expect(find.byIcon(Icons.photo_library), findsOneWidget);
+        expect(find.byKey(const Key('capture_button')), findsOneWidget);
+        expect(
+          find.text('Fotografa um problema de matemática'),
+          findsOneWidget,
+        );
+      },
+    );
 
-      expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
-    });
+    testWidgets(
+      'tapping capture button with multiple equations still navigates',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+          captureCallback: () async => 'x + 2 = 5\ny = 3',
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-    testWidgets('shows hamburger menu button on camera page', (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('capture_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
+      },
+    );
+
+    testWidgets('shows hamburger menu button on camera page', (
+      WidgetTester tester,
+    ) async {
       controller = StubCameraController(
         repository: repository,
         initCallback: () async {},
@@ -347,49 +453,55 @@ void main() {
       expect(find.byIcon(Icons.menu), findsOneWidget);
     });
 
-    testWidgets('shows instruction text above capture button with bold style and transparent black background', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'shows instruction text above capture button with bold style and transparent black background',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      final textFinder = find.text('Fotografa um problema de matemática');
-      expect(textFinder, findsOneWidget);
+        final textFinder = find.text('Fotografa um problema de matemática');
+        expect(textFinder, findsOneWidget);
 
-      final textWidget = tester.widget<Text>(textFinder);
-      expect(textWidget.style?.fontWeight, FontWeight.bold);
+        final textWidget = tester.widget<Text>(textFinder);
+        expect(textWidget.style?.fontWeight, FontWeight.bold);
 
-      final container = tester.widget<Container>(
-        find.ancestor(of: textFinder, matching: find.byType(Container)).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, Colors.black54);
-    });
+        final container = tester.widget<Container>(
+          find.ancestor(of: textFinder, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(decoration.color, Colors.black54);
+      },
+    );
 
-    testWidgets('tapping hamburger menu button opens side drawer occupying 80% of screen width', (WidgetTester tester) async {
-      controller = StubCameraController(
-        repository: repository,
-        initCallback: () async {},
-      );
-      controller.cameraController = cameraController;
-      when(() => cameraController.value).thenReturn(cameraValue);
+    testWidgets(
+      'tapping hamburger menu button opens side drawer occupying 80% of screen width',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
 
-      await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(Drawer), findsOneWidget);
-    });
+        expect(find.byType(Drawer), findsOneWidget);
+      },
+    );
   });
 }

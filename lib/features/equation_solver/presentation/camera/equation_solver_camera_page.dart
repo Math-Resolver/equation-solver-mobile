@@ -16,7 +16,8 @@ class EquationSolverCameraPage extends StatefulWidget {
   final EquationSolverCameraController controller;
 
   @override
-  State<EquationSolverCameraPage> createState() => _EquationSolverCameraPageState();
+  State<EquationSolverCameraPage> createState() =>
+      _EquationSolverCameraPageState();
 }
 
 class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
@@ -82,17 +83,11 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 90,
-                child: _buildCalculatorButton(),
-              ),
+              SizedBox(width: 90, child: _buildCalculatorButton()),
               const SizedBox(width: 20),
               EquationSolverCaptureButton(onTap: _handleCapture),
               const SizedBox(width: 20),
-              SizedBox(
-                width: 90,
-                child: _buildChatButton(),
-              ),
+              SizedBox(width: 90, child: _buildChatButton()),
             ],
           ),
           const SizedBox(height: 16),
@@ -128,7 +123,8 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
       children: [
         IconButton(
           icon: const Icon(Icons.question_answer_outlined, color: Colors.white),
-          onPressed: () => _navigateTo(const ChatAssistantChatPage(equation: '')),
+          onPressed: () =>
+              _navigateTo(const ChatAssistantChatPage(equation: '')),
         ),
         const Text(
           'Chat',
@@ -154,7 +150,11 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   }
 
   Future<void> _handleCapture() async {
-    final text = await controller.captureAndRecognize();
+    final viewportSize = MediaQuery.sizeOf(context);
+    final text = await controller.captureAndRecognize(
+      viewportSize: viewportSize,
+      focusRect: EquationSolverFocusRectangle.rectFor(viewportSize),
+    );
     var textIsNotNullOrEmpty = mounted && text != null && text.isNotEmpty;
     if (textIsNotNullOrEmpty) {
       _navigateTo(EquationSolverCalculatorPage(initialExpression: text));
@@ -162,9 +162,6 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   }
 
   void _navigateTo(Widget page) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 }
