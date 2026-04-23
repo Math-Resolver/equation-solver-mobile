@@ -8,4 +8,6 @@ class AppColors {
   static const keyboardNumbers = Color(0xFF7BAEC6);
   static const keyboardOperator = Color(0xFFDAE8F0);
   static const placeholderText = Color(0xFFAAAAAA);
+  static const splashBackground = Color(0xFFE7E7E7);
+  static const splashText = Color(0xFF232323);
 }

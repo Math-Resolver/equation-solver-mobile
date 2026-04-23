@@ -11,9 +11,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:equation_solver_mobile/main.dart';
 
 void main() {
-  testWidgets('App launches and shows camera loading state', (WidgetTester tester) async {
+  testWidgets('App launches and shows splash screen', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('killmath'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }

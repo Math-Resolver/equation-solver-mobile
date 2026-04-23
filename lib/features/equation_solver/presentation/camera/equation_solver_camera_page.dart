@@ -127,7 +127,7 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
               _navigateTo(const ChatAssistantChatPage(equation: '')),
         ),
         const Text(
-          'Chat',
+          'Killbot',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ],
