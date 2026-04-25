@@ -115,19 +115,26 @@ void main() {
   });
 
   group('Functions Keyboard', () {
-    test('should include log in functions keyboard', () {
+    test('should include ordered function symbols in functions keyboard', () {
       controller.switchKeyboard('functions');
-      expect(controller.activeKeyboard.symbols.contains('log'), isTrue);
+      expect(
+        controller.activeKeyboard.symbols,
+        containsAll(['f(x)', 'log₁₀', 'log₂', 'e', 'exp', 'ln', 'sign']),
+      );
     });
 
-    test('should include ln in functions keyboard', () {
+    test('should expose function structures in functions keyboard', () {
       controller.switchKeyboard('functions');
-      expect(controller.activeKeyboard.symbols.contains('ln'), isTrue);
+      expect(
+        controller.activeKeyboard.structures,
+        containsAll(['|□|', '□√□', '□/□', '□^□', '□( )', 'log□', '( )']),
+      );
     });
 
-    test('should NOT include sin in functions keyboard', () {
+    test('should have ordered layout with 24 entries in functions keyboard', () {
       controller.switchKeyboard('functions');
-      expect(controller.activeKeyboard.symbols.contains('sin'), isFalse);
+      expect(controller.activeKeyboard.orderedLayout, isNotNull);
+      expect(controller.activeKeyboard.orderedLayout, hasLength(24));
     });
   });
 
@@ -137,9 +144,9 @@ void main() {
       expect(controller.activeKeyboardType, equals('trig'));
     });
 
-    test('should include sin, cos, tan, cot in trig keyboard', () {
+    test('should include basic and advanced trig functions in trig keyboard', () {
       controller.switchKeyboard('trig');
-      for (final s in ['sin', 'cos', 'tan', 'cot']) {
+      for (final s in ['rad', 'sin', 'cos', 'tan', 'cot', 'csc', 'sinh', 'arsinh']) {
         expect(
           controller.activeKeyboard.symbols.contains(s),
           isTrue,
@@ -160,9 +167,9 @@ void main() {
       expect(controller.activeKeyboardType, equals('calculus'));
     });
 
-    test('should include lim, dx, Σ, ∫, ∞ in calculus keyboard', () {
+    test('should include updated calculus operators in calculus keyboard', () {
       controller.switchKeyboard('calculus');
-      for (final s in ['lim', 'dx', 'Σ', '∫', '∞']) {
+      for (final s in ['lim', 'd/dx', '∫', 'dy/dx', 'd/d', 'Σ', '∞', '!']) {
         expect(
           controller.activeKeyboard.symbols.contains(s),
           isTrue,

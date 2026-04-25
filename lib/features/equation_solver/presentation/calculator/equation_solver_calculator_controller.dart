@@ -62,18 +62,34 @@ class EquationSolverCalculatorController {
     ),
     'functions': KeyboardType(
       id: 'functions',
-      label: 'f(x) e log in',
-      symbols: {'f(x)', 'e', 'log', 'ln'},
+      label: 'f(x) e log ln',
+      symbols: {
+        'f(x)', 'log₁₀', 'i', 'log₂', 'P', 'z', '!',
+        'e', 'f(x,y)', 'C', 'Z̄', 'exp', '%', 'ln', 'sign',
+      },
+      structures: [
+        '|□|', '□√□', '□/□', '□^□', '□( )', 'log□', '( )', '⌈□⌉', '⌊□⌋',
+      ],
+      orderedLayout: [
+        '|□|', 'f(x)', 'log₁₀', '□V□', 'i', '□,□,□',
+        '□^□', '□(□)', 'log₂', 'P', 'z', '!',
+        'e', 'f(x,y)', 'log□', 'C', 'Z̄', '⌈□⌉',
+        'exp', '%', 'ln', '(□□)', 'sign', '⌊□⌋',
+      ],
     ),
     'trig': KeyboardType(
       id: 'trig',
       label: 'sin cos tan cot',
-      symbols: {'sin', 'cos', 'tan', 'cot'},
+      symbols: {'rad', 'sin', 'cos', 'tan', 'cot', 
+                'csc','arcsin', 'arccos', 'arctan', 
+                'arccot', 'arcsec', 'sinh', 'cosh', 
+                'tanh', 'coth', 'sech', 'arsinh', 
+                'arcosh', 'artanh', 'arcoth', 'arcsech'},
     ),
     'calculus': KeyboardType(
       id: 'calculus',
-      label: 'lim dx Σ ∫ ∞',
-      symbols: {'lim', 'dx', 'Σ', '∫', '∞'},
+      label: 'lim dx ∑ ∫ ∞',
+      symbols: {'lim', 'd/dx', '∫', 'dy/dx', 'd/d', 'Σ', '∞', '!'},
     ),
     'abc': KeyboardType(
       id: 'abc',
@@ -159,6 +175,14 @@ class EquationSolverCalculatorController {
     '( )': ('(□)', 1),
     '√':   ('√□', 1),
     '□²':  ('□²', 0),
+    '|□|': ('|□|', 1),
+    '□√□': ('□√□', 0),
+    '□/□': ('□/□', 0),
+    '□^□': ('□^□', 0),
+    '□( )': ('□(□)', 0),
+    'log□': ('log□', 3),
+    '⌈□⌉': ('⌈□⌉', 1),
+    '⌊□⌋': ('⌊□⌋', 1),
   };
 
   void insertStructure(String structure) {

@@ -348,7 +348,8 @@ class _EquationSolverCalculatorPageState
     required int col,
   }) {
     final isStructure = keyboard.structures.contains(label);
-    final isRightColumn = col >= 3;
+    final usesNumericStyling = keyboard.id == 'basic';
+    final isRightColumn = usesNumericStyling && col >= 3;
     final isDigit = int.tryParse(label) != null;
     final bgColor = isRightColumn
         ? AppColors.keyboardNumbers
@@ -452,7 +453,7 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: _anim.value > 0.5 ? 1.0 : 0.0,
         child: Container(
           width: 2,
