@@ -1,6 +1,7 @@
 import 'package:equation_solver_mobile/drawables/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'equation_solver_calculator_controller.dart';
+import 'widgets/block_math_input.dart';
 
 class EquationSolverCalculatorPage extends StatefulWidget {
   final String? initialExpression;
@@ -87,60 +88,10 @@ class _EquationSolverCalculatorPageState
   }
 
   Widget _buildExpressionDisplay() {
-    final isEmpty = _controller.expression.isEmpty;
-    final expr = _controller.expression;
-    final pos = _controller.cursorPosition.clamp(0, expr.length);
-    final before = expr.substring(0, pos);
-    final after = expr.substring(pos);
-
-    return CustomPaint(
-      painter: _DashedBottomBorderPainter(),
-      child: Container(
-        key: const Key('expression_display'),
-        alignment: Alignment.topLeft,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Text(
-                before,
-                key: const Key('cursor_before'),
-                maxLines: 1,
-                overflow: TextOverflow.fade,
-                softWrap: false,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
-              ),
-            ),
-            _BlinkingCursor(key: const Key('cursor_indicator')),
-            if (isEmpty)
-              Flexible(
-                child: Text(
-                  'Digite um problema matemático..',
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.placeholderText,
-                  ),
-                ),
-              )
-            else
-              Flexible(
-                child: Text(
-                  after,
-                  key: const Key('cursor_after'),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
-                ),
-              ),
-          ],
-        ),
-      ),
+    return BlockMathInput(
+      state: _controller.editorState,
+      onSelectionChanged: (rowNodeId, offset) =>
+          _setState(() => _controller.focusRow(rowNodeId, offset)),
     );
   }
 
@@ -324,11 +275,13 @@ class _EquationSolverCalculatorPageState
                 children: [
                   for (var c = 0; c < cols; c++) ...[
                     Expanded(
-                      child: _buildOrderedButton(
-                        label: orderedLayout[r * cols + c],
-                        keyboard: keyboard,
-                        col: c,
-                      ),
+                      child: (r * cols + c) < orderedLayout.length
+                          ? _buildOrderedButton(
+                              label: orderedLayout[r * cols + c],
+                              keyboard: keyboard,
+                              col: c,
+                            )
+                          : const SizedBox.shrink(),
                     ),
                     if (c < cols - 1) const SizedBox(width: spacing),
                   ],
@@ -347,7 +300,7 @@ class _EquationSolverCalculatorPageState
     required KeyboardType keyboard,
     required int col,
   }) {
-    final isStructure = keyboard.structures.contains(label);
+    final isStructure = keyboard.structures.any((item) => item.label == label);
     final usesNumericStyling = keyboard.id == 'basic';
     final isRightColumn = usesNumericStyling && col >= 3;
     final isDigit = int.tryParse(label) != null;
@@ -387,7 +340,9 @@ class _EquationSolverCalculatorPageState
   }
 
   Widget _buildStructureGrid() {
-    final structures = _controller.activeKeyboard.structures;
+    final structures = _controller.activeKeyboard.structures
+        .map((item) => item.label)
+        .toList(growable: false);
 
     return Padding(
       padding: const EdgeInsets.all(8),
@@ -421,74 +376,4 @@ class _EquationSolverCalculatorPageState
   void _setState(VoidCallback fn) {
     setState(fn);
   }
-}
-
-class _BlinkingCursor extends StatefulWidget {
-  const _BlinkingCursor({super.key});
-
-  @override
-  State<_BlinkingCursor> createState() => _BlinkingCursorState();
-}
-
-class _BlinkingCursorState extends State<_BlinkingCursor>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 530),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, _) => Opacity(
-        opacity: _anim.value > 0.5 ? 1.0 : 0.0,
-        child: Container(
-          width: 2,
-          height: 20,
-          color: AppColors.selected,
-          margin: const EdgeInsets.symmetric(horizontal: 1),
-        ),
-      ),
-    );
-  }
-}
-
-class _DashedBottomBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFBBBBBB)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    const dashWidth = 5.0;
-    const dashSpace = 4.0;
-    double startX = 0;
-    final y = size.height;
-
-    while (startX < size.width) {
-      canvas.drawLine(
-        Offset(startX, y),
-        Offset((startX + dashWidth).clamp(0, size.width), y),
-        paint,
-      );
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedBottomBorderPainter oldDelegate) => false;
 }

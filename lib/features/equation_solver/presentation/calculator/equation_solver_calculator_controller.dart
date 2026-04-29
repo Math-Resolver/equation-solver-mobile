@@ -1,133 +1,34 @@
-class ExpressionState {
-  final String expression;
-  final int cursorPosition;
-  final String activeKeyboardType;
-  final List<String> history;
+import 'models/math_ast.dart';
+import 'controller/expression_state.dart';
+import 'controller/keyboard_catalog.dart';
+import 'controller/keyboard_models.dart';
+import 'controller/serialized_cursor_position_calculator.dart';
+import 'services/math_editor_reducer.dart';
+import 'services/math_expression_parser.dart';
+import 'services/math_expression_serializer.dart';
 
-  const ExpressionState({
-    this.expression = '',
-    this.cursorPosition = 0,
-    this.activeKeyboardType = 'basic',
-    this.history = const [],
-  });
-
-  ExpressionState copyWith({
-    String? expression,
-    int? cursorPosition,
-    String? activeKeyboardType,
-    List<String>? history,
-  }) {
-    return ExpressionState(
-      expression: expression ?? this.expression,
-      cursorPosition: cursorPosition ?? this.cursorPosition,
-      activeKeyboardType: activeKeyboardType ?? this.activeKeyboardType,
-      history: history ?? this.history,
-    );
-  }
-}
-
-class KeyboardType {
-  final String id;
-  final String label;
-  final Set<String> symbols;
-  final List<String> structures;
-  final List<String>? orderedLayout;
-
-  const KeyboardType({
-    required this.id,
-    required this.label,
-    required this.symbols,
-    this.structures = const [],
-    this.orderedLayout,
-  });
-}
+export 'controller/keyboard_models.dart';
 
 class EquationSolverCalculatorController {
-  static const Map<String, KeyboardType> _keyboards = {
-    'basic': KeyboardType(
-      id: 'basic',
-      label: '+ - x ÷',
-      symbols: {
-        '+', '-', '×', '÷', '=', '1/', '>', 'x',
-        'π', '%', ',',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-      },
-      structures: ['( )', '√', '□²'],
-      orderedLayout: [
-        '( )', '+',  '÷', '7', '8', '9',
-        '1/',  '√',  'x', '4', '5', '6',
-        '□²',  '>',  '-', '1', '2', '3',
-        'π',   '%', '×', '0', ',', '=',
-      ],
-    ),
-    'functions': KeyboardType(
-      id: 'functions',
-      label: 'f(x) e log ln',
-      symbols: {
-        'f(x)', 'log₁₀', 'i', 'log₂', 'P', 'z', '!',
-        'e', 'f(x,y)', 'C', 'Z̄', 'exp', '%', 'ln', 'sign',
-      },
-      structures: [
-        '|□|', '□√□', '□/□', '□^□', '□( )', 'log□', '( )', '⌈□⌉', '⌊□⌋',
-      ],
-      orderedLayout: [
-        '|□|', 'f(x)', 'log₁₀', '□V□', 'i', '□,□,□',
-        '□^□', '□(□)', 'log₂', 'P', 'z', '!',
-        'e', 'f(x,y)', 'log□', 'C', 'Z̄', '⌈□⌉',
-        'exp', '%', 'ln', '(□□)', 'sign', '⌊□⌋',
-      ],
-    ),
-    'trig': KeyboardType(
-      id: 'trig',
-      label: 'sin cos tan cot',
-      symbols: {'rad', 'sin', 'cos', 'tan', 'cot', 
-                'csc','arcsin', 'arccos', 'arctan', 
-                'arccot', 'arcsec', 'sinh', 'cosh', 
-                'tanh', 'coth', 'sech', 'arsinh', 
-                'arcosh', 'artanh', 'arcoth', 'arcsech'},
-    ),
-    'calculus': KeyboardType(
-      id: 'calculus',
-      label: 'lim dx ∑ ∫ ∞',
-      symbols: {'lim', 'd/dx', '∫', 'dy/dx', 'd/d', 'Σ', '∞', '!'},
-    ),
-    'abc': KeyboardType(
-      id: 'abc',
-      label: 'ABC',
-      symbols: {
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-      },
-    ),
-  };
-
-  static const List<String> _keyboardOrder = [
-    'basic',
-    'functions',
-    'trig',
-    'calculus',
-    'abc',
-  ];
-
-  ExpressionState _state = const ExpressionState();
-
+  ExpressionState _state = ExpressionState.initial();
   ExpressionState get state => _state;
-  String get expression => _state.expression;
-  int get cursorPosition => _state.cursorPosition;
+  MathEditorState get editorState => _state.editorState;
+  String get expression => MathExpressionSerializer.serializeRow(_state.editorState.root);
+  int get cursorPosition => SerializedCursorPositionCalculator.find(_state.editorState);
   String get activeKeyboardType => _state.activeKeyboardType;
-
-  KeyboardType get activeKeyboard => _keyboards[_state.activeKeyboardType]!;
-  List<String> get availableKeyboards => _keyboardOrder;
+  KeyboardType get activeKeyboard => KeyboardCatalog.keyboards[_state.activeKeyboardType]!;
+  List<String> get availableKeyboards => KeyboardCatalog.keyboardOrder;
 
   void toggleKeyboard() {
-    final currentIndex = _keyboardOrder.indexOf(_state.activeKeyboardType);
-    final nextIndex = (currentIndex + 1) % _keyboardOrder.length;
-    final nextKeyboardId = _keyboardOrder[nextIndex];
+    final currentIndex =
+        KeyboardCatalog.keyboardOrder.indexOf(_state.activeKeyboardType);
+    final nextIndex = (currentIndex + 1) % KeyboardCatalog.keyboardOrder.length;
+    final nextKeyboardId = KeyboardCatalog.keyboardOrder[nextIndex];
     _state = _state.copyWith(activeKeyboardType: nextKeyboardId);
   }
 
   void switchKeyboard(String keyboardId) {
-    if (_keyboards.containsKey(keyboardId)) {
+    if (KeyboardCatalog.keyboards.containsKey(keyboardId)) {
       _state = _state.copyWith(activeKeyboardType: keyboardId);
     }
   }
@@ -137,115 +38,77 @@ class EquationSolverCalculatorController {
         activeKeyboard.symbols.contains(symbol.toLowerCase());
   }
 
-  KeyboardType getKeyboard(String id) => _keyboards[id]!;
+  KeyboardType getKeyboard(String id) => KeyboardCatalog.keyboards[id]!;
 
   bool isStructureAllowed(String structure) {
-    return activeKeyboard.structures.contains(structure);
+    return activeKeyboard.structures.any((item) => item.label == structure);
   }
 
   void insertSymbol(String symbol) {
     if (!isSymbolAllowed(symbol)) {
       return;
     }
-
     _addToHistory();
-    final pos = _state.cursorPosition;
-    final expr = _state.expression;
-    final isAtPlaceholder = expr.isNotEmpty &&
-        pos < expr.length &&
-        expr[pos] == '□';
-
-    final newExpression = expr.isEmpty
-        ? symbol
-        : expr.replaceRange(
-            pos,
-            isAtPlaceholder ? pos + 1 : pos,
-            symbol,
-          );
-
     _state = _state.copyWith(
-      expression: newExpression,
-      cursorPosition: pos + symbol.length,
+      editorState: MathEditorReducer.insertToken(_state.editorState, symbol),
     );
   }
-
-  // Maps each structure to (text to insert, cursor offset from insertion point).
-  // Cursor offset puts the cursor right before the □ placeholder.
-  static const Map<String, (String, int)> _structureInsertions = {
-    '( )': ('(□)', 1),
-    '√':   ('√□', 1),
-    '□²':  ('□²', 0),
-    '|□|': ('|□|', 1),
-    '□√□': ('□√□', 0),
-    '□/□': ('□/□', 0),
-    '□^□': ('□^□', 0),
-    '□( )': ('□(□)', 0),
-    'log□': ('log□', 3),
-    '⌈□⌉': ('⌈□⌉', 1),
-    '⌊□⌋': ('⌊□⌋', 1),
-  };
 
   void insertStructure(String structure) {
     if (!isStructureAllowed(structure)) {
       return;
     }
-
+    MathStructureType? structureAction;
+    for (final item in activeKeyboard.structures) {
+      if (item.label == structure) {
+        structureAction = item.action;
+        break;
+      }
+    }
+    if (structureAction == null) {
+      return;
+    }
     _addToHistory();
-    final (text, cursorOffset) =
-        _structureInsertions[structure] ?? ('$structure□', structure.length);
-    final pos = _state.cursorPosition;
-
-    final newExpression = _state.expression.isEmpty
-        ? text
-        : _state.expression.replaceRange(pos, pos, text);
-
     _state = _state.copyWith(
-      expression: newExpression,
-      cursorPosition: pos + cursorOffset,
+      editorState: MathEditorReducer.insertStructure(
+        _state.editorState,
+        structureAction,
+      ),
     );
   }
 
   void moveCursorRight() {
-    if (_state.cursorPosition < _state.expression.length) {
-      _state = _state.copyWith(cursorPosition: _state.cursorPosition + 1);
-    }
+    _state = _state.copyWith(
+      editorState: MathEditorReducer.moveRight(_state.editorState),
+    );
   }
 
   void moveCursorLeft() {
-    if (_state.cursorPosition > 0) {
-      _state = _state.copyWith(cursorPosition: _state.cursorPosition - 1);
-    }
+    _state = _state.copyWith(
+      editorState: MathEditorReducer.moveLeft(_state.editorState),
+    );
   }
 
   void deleteCharacter() {
-    if (_state.cursorPosition == 0) {
+    final currentExpression = expression;
+    if (currentExpression.isEmpty) {
       return;
     }
 
     _addToHistory();
-    final newExpression = _state.expression.isEmpty
-        ? ''
-        : _state.expression.replaceRange(
-            _state.cursorPosition - 1,
-            _state.cursorPosition,
-            '',
-          );
-
     _state = _state.copyWith(
-      expression: newExpression,
-      cursorPosition: (_state.cursorPosition - 1).clamp(0, newExpression.length),
+      editorState: MathEditorReducer.deleteBackward(_state.editorState),
     );
   }
 
   void clear() {
-    if (_state.expression.isEmpty) {
+    if (expression.isEmpty) {
       return;
     }
 
     _addToHistory();
     _state = _state.copyWith(
-      expression: '',
-      cursorPosition: 0,
+      editorState: MathEditorReducer.clear(_state.editorState),
     );
   }
 
@@ -254,31 +117,39 @@ class EquationSolverCalculatorController {
       return;
     }
 
-    final previousExpression = _state.history.last;
+    final previousEditorState = _state.history.last;
     final historyWithoutLast = _state.history.sublist(0, _state.history.length - 1);
 
     _state = _state.copyWith(
-      expression: previousExpression,
+      editorState: previousEditorState,
       history: historyWithoutLast,
-      cursorPosition: previousExpression.length.clamp(0, previousExpression.length),
     );
   }
 
   void _addToHistory() {
-    final newHistory = [..._state.history, _state.expression];
+    final newHistory = [..._state.history, _state.editorState];
     _state = _state.copyWith(history: newHistory);
   }
 
   void reset() {
-    _state = const ExpressionState();
+    _state = ExpressionState.initial();
   }
 
   void loadExpression(String expression) {
     if (expression.isNotEmpty) {
       _state = _state.copyWith(
-        expression: expression,
-        cursorPosition: expression.length,
+        editorState: MathExpressionParser.parseToState(expression),
       );
     }
+  }
+
+  void focusRow(String rowNodeId, int offset) {
+    _state = _state.copyWith(
+      editorState: MathEditorReducer.focusRow(
+        _state.editorState,
+        rowNodeId: rowNodeId,
+        offset: offset,
+      ),
+    );
   }
 }
