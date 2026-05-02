@@ -1,3 +1,6 @@
+import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/models/equation_solution.dart';
+
 import 'models/math_ast.dart';
 import 'controller/expression_state.dart';
 import 'controller/keyboard_catalog.dart';
@@ -10,7 +13,17 @@ import 'services/math_expression_serializer.dart';
 export 'controller/keyboard_models.dart';
 
 class EquationSolverCalculatorController {
+  EquationSolverCalculatorController({
+    IEquationSolverRepositoryInterface? repository,
+  }) : _repository = repository;
+
+  final IEquationSolverRepositoryInterface? _repository;
+
   ExpressionState _state = ExpressionState.initial();
+
+  EquationSolution? solution;
+  bool isLoading = false;
+  Object? solveError;
   ExpressionState get state => _state;
   MathEditorState get editorState => _state.editorState;
   String get expression => MathExpressionSerializer.serializeRow(_state.editorState.root);
@@ -133,6 +146,8 @@ class EquationSolverCalculatorController {
 
   void reset() {
     _state = ExpressionState.initial();
+    solution = null;
+    solveError = null;
   }
 
   void loadExpression(String expression) {
@@ -151,5 +166,22 @@ class EquationSolverCalculatorController {
         offset: offset,
       ),
     );
+  }
+
+  Future<void> solve() async {
+    if (_repository == null) return;
+    isLoading = true;
+    solution = null;
+    solveError = null;
+    try {
+      solution = await _repository!.solveEquation(
+        equation: expression,
+        showSteps: true,
+      );
+    } catch (e) {
+      solveError = e;
+    } finally {
+      isLoading = false;
+    }
   }
 }

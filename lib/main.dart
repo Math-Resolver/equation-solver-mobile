@@ -1,10 +1,12 @@
+import 'package:equation_solver_mobile/dependencies.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_controller.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/splash/equation_solver_splash_page.dart';
-import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_impl.dart';
 import 'package:flutter/material.dart';
 
-final repository = EquationSolverRepositoryImpl();
-final cameraController = EquationSolverCameraController(repository: repository);
+final dependencies = AppDependencies.instance;
+final cameraController = EquationSolverCameraController(
+  repository: dependencies.equationRepository,
+);
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +15,7 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-@override
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Equation Solver',

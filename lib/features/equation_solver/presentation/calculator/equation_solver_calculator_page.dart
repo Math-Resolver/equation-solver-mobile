@@ -1,12 +1,19 @@
+import 'package:equation_solver_mobile/dependencies.dart';
 import 'package:equation_solver_mobile/drawables/app_colors.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
 import 'package:flutter/material.dart';
 import 'equation_solver_calculator_controller.dart';
 import 'widgets/block_math_input.dart';
 
 class EquationSolverCalculatorPage extends StatefulWidget {
   final String? initialExpression;
+  final IEquationSolverRepositoryInterface? repository;
 
-  const EquationSolverCalculatorPage({this.initialExpression, super.key});
+  const EquationSolverCalculatorPage({
+    this.initialExpression,
+    this.repository,
+    super.key,
+  });
 
   @override
   State<EquationSolverCalculatorPage> createState() =>
@@ -20,7 +27,9 @@ class _EquationSolverCalculatorPageState
   @override
   void initState() {
     super.initState();
-    _controller = EquationSolverCalculatorController();
+    final repo =
+        widget.repository ?? AppDependencies.instance.equationRepository;
+    _controller = EquationSolverCalculatorController(repository: repo);
     _loadInitialExpression();
   }
 
@@ -87,11 +96,72 @@ class _EquationSolverCalculatorPageState
     );
   }
 
+  Future<void> _handleSolve() async {
+    if (_controller.expression.isEmpty) return;
+    setState(() {});
+    await _controller.solve();
+    if (!mounted) return;
+    setState(() {});
+    if (_controller.solveError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nao foi possivel resolver a equacao.')),
+      );
+    }
+  }
+
   Widget _buildExpressionDisplay() {
-    return BlockMathInput(
-      state: _controller.editorState,
-      onSelectionChanged: (rowNodeId, offset) =>
-          _setState(() => _controller.focusRow(rowNodeId, offset)),
+    return Column(
+      children: [
+        Expanded(
+          child: BlockMathInput(
+            state: _controller.editorState,
+            onSelectionChanged: (rowNodeId, offset) =>
+                _setState(() => _controller.focusRow(rowNodeId, offset)),
+          ),
+        ),
+        _buildSolveResultPanel(),
+      ],
+    );
+  }
+
+  Widget _buildSolveResultPanel() {
+    if (_controller.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: CircularProgressIndicator(),
+      );
+    }
+    final sol = _controller.solution;
+    if (sol == null) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.selected.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.selected.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            sol.result,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          if (sol.steps.isNotEmpty) ...
+            sol.steps.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${s.rule}: ${s.before} → ${s.after}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -131,7 +201,11 @@ class _EquationSolverCalculatorPageState
                   Icons.arrow_forward,
                   () => _setState(() => _controller.moveCursorRight()),
                 ),
-                _buildIconButton('submit_button', Icons.keyboard_return, () {}),
+                _buildIconButton(
+                  'submit_button',
+                  Icons.keyboard_return,
+                  _handleSolve,
+                ),
                 _buildIconButton(
                   'delete_button',
                   Icons.backspace_outlined,

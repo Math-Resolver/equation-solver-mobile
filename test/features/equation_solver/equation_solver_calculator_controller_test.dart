@@ -1,5 +1,11 @@
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_controller.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/models/equation_solution.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockEquationRepository extends Mock
+    implements IEquationSolverRepositoryInterface {}
 
 void main() {
   late EquationSolverCalculatorController controller;
@@ -84,6 +90,63 @@ void main() {
       controller.loadExpression('√(9)+(1)/(2)');
 
       expect(controller.expression, '√(9)+(1)/(2)');
+    });
+  });
+
+  group('Solve via API', () {
+    late MockEquationRepository repository;
+    late EquationSolverCalculatorController controllerWithRepo;
+
+    setUp(() {
+      repository = MockEquationRepository();
+      controllerWithRepo = EquationSolverCalculatorController(
+        repository: repository,
+      );
+    });
+
+    test('solve calls repository with current expression and showSteps true', () async {
+      controllerWithRepo.loadExpression('2*x+5=15');
+      when(
+        () => repository.solveEquation(
+          equation: '2*x+5=15',
+          showSteps: true,
+        ),
+      ).thenAnswer(
+        (_) async => const EquationSolution(result: 'x = 5', steps: []),
+      );
+
+      await controllerWithRepo.solve();
+
+      verify(
+        () => repository.solveEquation(equation: '2*x+5=15', showSteps: true),
+      ).called(1);
+      expect(controllerWithRepo.solution?.result, 'x = 5');
+    });
+
+    test('solve sets isLoading to true then false around the call', () async {
+      controllerWithRepo.loadExpression('x=1');
+      when(
+        () => repository.solveEquation(equation: any(named: 'equation'), showSteps: any(named: 'showSteps')),
+      ).thenAnswer((_) async {
+        expect(controllerWithRepo.isLoading, isTrue);
+        return const EquationSolution(result: 'x = 1', steps: []);
+      });
+
+      await controllerWithRepo.solve();
+
+      expect(controllerWithRepo.isLoading, isFalse);
+    });
+
+    test('solve sets solveError when repository throws', () async {
+      controllerWithRepo.loadExpression('bad');
+      when(
+        () => repository.solveEquation(equation: any(named: 'equation'), showSteps: any(named: 'showSteps')),
+      ).thenThrow(Exception('network error'));
+
+      await controllerWithRepo.solve();
+
+      expect(controllerWithRepo.solveError, isNotNull);
+      expect(controllerWithRepo.solution, isNull);
     });
   });
 }
