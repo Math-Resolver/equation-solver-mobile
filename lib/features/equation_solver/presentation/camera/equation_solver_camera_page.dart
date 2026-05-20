@@ -2,12 +2,15 @@ import 'package:camera/camera.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/presentation/chat/chat_assistant_chat_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_controller.dart';
+import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_app_drawer.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_camera_preview.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_capture_button.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_flash_gallery_row.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_focus_rectangle.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_instruction_text.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_menu_button.dart';
+import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
+import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 import 'package:flutter/material.dart';
 
 class EquationSolverCameraPage extends StatefulWidget {
@@ -49,12 +52,7 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
     }
 
     return Scaffold(
-      drawer: Drawer(
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          color: Colors.white,
-        ),
-      ),
+      drawer: const EquationSolverAppDrawer(),
       body: Builder(
         builder: (context) => Stack(
           children: [
@@ -102,6 +100,7 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   }
 
   Widget _buildCalculatorButton() {
+    final localeController = AppLocalizationScope.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -109,15 +108,19 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
           icon: const Icon(Icons.calculate, color: Colors.white),
           onPressed: () => _navigateTo(const EquationSolverCalculatorPage()),
         ),
-        const Text(
-          'Calculadora',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        Text(
+          localeController.text(AppTextKey.cameraCalculator),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
   }
 
   Widget _buildChatButton() {
+    final localeController = AppLocalizationScope.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -126,9 +129,12 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
           onPressed: () =>
               _navigateTo(const ChatAssistantChatPage(equation: '')),
         ),
-        const Text(
-          'Killbot',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        Text(
+          localeController.text(AppTextKey.cameraChatbot),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
