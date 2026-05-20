@@ -2,6 +2,7 @@ import 'package:equation_solver_mobile/features/equation_solver/presentation/cam
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/splash/equation_solver_splash_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/models/equation_solution.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,6 +10,12 @@ class FakeEquationSolverRepository implements IEquationSolverRepositoryInterface
   @override
   Future<String> getRecognizedText(String path) async {
     return '';
+  }
+
+  @override
+  Future<EquationSolution> solveEquation({required String equation, bool showSteps = true}) {
+    // TODO: implement solveEquation
+    throw UnimplementedError();
   }
 }
 
