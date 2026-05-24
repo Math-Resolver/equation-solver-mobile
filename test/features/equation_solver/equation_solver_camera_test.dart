@@ -5,6 +5,10 @@ import 'package:equation_solver_mobile/features/chat_assistant/presentation/chat
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_controller.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_page.dart';
+import 'package:equation_solver_mobile/features/auth/presentation/profile/profile_page.dart';
+import 'package:equation_solver_mobile/features/menu/presentation/about_us/about_us_page.dart';
+import 'package:equation_solver_mobile/features/menu/presentation/help_center/help_center_page.dart';
+import 'package:equation_solver_mobile/features/menu/presentation/languages/language_selection_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -503,5 +507,121 @@ void main() {
         expect(find.byType(Drawer), findsOneWidget);
       },
     );
+
+    testWidgets('drawer shows language/help/about entries', (
+      WidgetTester tester,
+    ) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Idioma'), findsOneWidget);
+      expect(find.text('Centro de ajuda'), findsOneWidget);
+      expect(find.text('Sobre Nós'), findsOneWidget);
+      expect(find.text('Meu Perfil'), findsOneWidget);
+    });
+
+    testWidgets('tapping Meu Perfil navigates to profile page', (
+      WidgetTester tester,
+    ) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Meu Perfil'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProfilePage), findsOneWidget);
+    });
+
+    testWidgets('tapping Idioma navigates to language selection page', (
+      WidgetTester tester,
+    ) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Idioma'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LanguageSelectionPage), findsOneWidget);
+    });
+
+    testWidgets('tapping Centro de ajuda navigates to help page', (
+      WidgetTester tester,
+    ) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Centro de ajuda'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HelpCenterPage), findsOneWidget);
+    });
+
+    testWidgets('tapping Sobre Nós navigates to about page', (
+      WidgetTester tester,
+    ) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sobre Nós'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AboutUsPage), findsOneWidget);
+    });
   });
 }

@@ -1,4 +1,6 @@
 import 'package:equation_solver_mobile/dependencies.dart';
+import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
+import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/repository/chat_assistant_repository_interface.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/repository/models/conversation_response.dart';
 import 'package:flutter/material.dart';
@@ -37,10 +39,13 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
   }
 
   Future<void> _sendTopic() async {
+    final localeController = AppLocalizationScope.of(context);
     final topic = _topicController.text.trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe um topico para continuar.')),
+        SnackBar(
+          content: Text(localeController.text(AppTextKey.chatTopicRequired)),
+        ),
       );
       return;
     }
@@ -53,8 +58,8 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nao foi possivel consultar o assistente.'),
+        SnackBar(
+          content: Text(localeController.text(AppTextKey.chatConsultError)),
         ),
       );
     } finally {
@@ -66,8 +71,9 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localeController = AppLocalizationScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat Assistant')),
+      appBar: AppBar(title: Text(localeController.text(AppTextKey.chatTitle))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -75,10 +81,10 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
           children: [
             TextField(
               controller: _topicController,
-              decoration: const InputDecoration(
-                labelText: 'Topico',
-                hintText: 'Ex: Logarithm',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: localeController.text(AppTextKey.chatTopicLabel),
+                hintText: localeController.text(AppTextKey.chatTopicHint),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -90,12 +96,16 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Consultar'),
+                  : Text(localeController.text(AppTextKey.chatSubmit)),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: _response == null
-                  ? const Center(child: Text('Nenhuma resposta ainda.'))
+                  ? Center(
+                      child: Text(
+                        localeController.text(AppTextKey.chatEmptyResponse),
+                      ),
+                    )
                   : Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12),

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
+import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 
 class EquationSolverInstructionText extends StatelessWidget {
   const EquationSolverInstructionText({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localeController = AppLocalizationScope.of(context);
+
     return Positioned(
       bottom: 210,
       left: 0,
@@ -16,9 +20,9 @@ class EquationSolverInstructionText extends StatelessWidget {
             color: Colors.black54,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text(
-            'Fotografa um problema de matemática',
-            style: TextStyle(
+          child: Text(
+            localeController.text(AppTextKey.cameraInstruction),
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 16,

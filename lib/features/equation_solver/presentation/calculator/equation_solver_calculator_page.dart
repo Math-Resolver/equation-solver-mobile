@@ -1,4 +1,6 @@
 import 'package:equation_solver_mobile/dependencies.dart';
+import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
+import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 import 'package:equation_solver_mobile/drawables/app_colors.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
 import 'package:flutter/material.dart';
@@ -66,14 +68,15 @@ class _EquationSolverCalculatorPageState
   }
 
   Widget _buildHeader(BuildContext context) {
+    final localeController = AppLocalizationScope.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Stack(
         children: [
           Center(
-            child: const Text(
-              'Calculadora',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            child: Text(
+              localeController.text(AppTextKey.calculatorTitle),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
           Positioned(
@@ -83,7 +86,7 @@ class _EquationSolverCalculatorPageState
                   ? Navigator.of(context).pop()
                   : Navigator.of(context).pushReplacementNamed('/camera'),
               child: Text(
-                'Fechar',
+                localeController.text(AppTextKey.calculatorClose),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.selected,
                   fontWeight: FontWeight.w600,
@@ -103,8 +106,11 @@ class _EquationSolverCalculatorPageState
     if (!mounted) return;
     setState(() {});
     if (_controller.solveError != null) {
+      final localeController = AppLocalizationScope.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nao foi possivel resolver a equacao.')),
+        SnackBar(
+          content: Text(localeController.text(AppTextKey.calculatorSolveError)),
+        ),
       );
     }
   }
