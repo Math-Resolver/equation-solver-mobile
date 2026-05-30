@@ -29,11 +29,23 @@ class AppStringsCatalog {
       title: 'Norsk Bokmal',
       subtitle: 'Bokmal norueguês',
     ),
-    SupportedLanguageOption(code: 'zh', title: '简体中文', subtitle: 'Chinês simplificado'),
-    SupportedLanguageOption(code: 'zh_TW', title: '傳統中文', subtitle: 'Chinês tradicional'),
+    SupportedLanguageOption(
+      code: 'zh',
+      title: '简体中文',
+      subtitle: 'Chinês simplificado',
+    ),
+    SupportedLanguageOption(
+      code: 'zh_TW',
+      title: '傳統中文',
+      subtitle: 'Chinês tradicional',
+    ),
     SupportedLanguageOption(code: 'ko', title: '한국인', subtitle: 'Coreano'),
     SupportedLanguageOption(code: 'hr', title: 'Hrvatski', subtitle: 'Croata'),
-    SupportedLanguageOption(code: 'da', title: 'Dansk', subtitle: 'Dinamarquês'),
+    SupportedLanguageOption(
+      code: 'da',
+      title: 'Dansk',
+      subtitle: 'Dinamarquês',
+    ),
     SupportedLanguageOption(
       code: 'sl',
       title: 'Slovencina',
@@ -70,16 +82,25 @@ class AppStringsCatalog {
       AppTextKey.profileRegisterButton: 'Criar conta',
       AppTextKey.profileLoginError: 'Não foi possível fazer login.',
       AppTextKey.profileRegisterError: 'Não foi possível criar a conta.',
+      AppTextKey.profilePasskeyUnavailable:
+          'Passkey indisponivel neste dispositivo.',
+      AppTextKey.profileLoginSuccess: 'Login realizado com sucesso.',
+      AppTextKey.profileRegisterSuccess: 'Conta criada com sucesso.',
       AppTextKey.cameraInstruction: 'Fotografa um problema de matemática',
       AppTextKey.cameraCalculator: 'Calculadora',
       AppTextKey.cameraChatbot: 'Killbot',
       AppTextKey.calculatorTitle: 'Calculadora',
       AppTextKey.calculatorClose: 'Fechar',
+      AppTextKey.calculatorSolveBadRequest:
+          'Equacao invalida ou nao pode ser resolvida.',
       AppTextKey.calculatorSolveError: 'Nao foi possivel resolver a equacao.',
       AppTextKey.chatTitle: 'Chat Assistant',
       AppTextKey.chatTopicLabel: 'Topico',
       AppTextKey.chatTopicHint: 'Ex: Logarithm',
       AppTextKey.chatSubmit: 'Consultar',
+      AppTextKey.chatRequestMoreExample: 'Pedir mais exemplo',
+      AppTextKey.chatChangeTopic: 'Trocar topico',
+      AppTextKey.chatRetryTopics: 'Tentar topicos novamente',
       AppTextKey.chatEmptyResponse: 'Nenhuma resposta ainda.',
       AppTextKey.chatTopicRequired: 'Informe um topico para continuar.',
       AppTextKey.chatConsultError: 'Nao foi possivel consultar o assistente.',
@@ -108,16 +129,25 @@ class AppStringsCatalog {
       AppTextKey.profileRegisterButton: 'Create account',
       AppTextKey.profileLoginError: 'Could not log in.',
       AppTextKey.profileRegisterError: 'Could not create account.',
+      AppTextKey.profilePasskeyUnavailable:
+          'Passkey is unavailable on this device.',
+      AppTextKey.profileLoginSuccess: 'Logged in successfully.',
+      AppTextKey.profileRegisterSuccess: 'Account created successfully.',
       AppTextKey.cameraInstruction: 'Take a photo of a math problem',
       AppTextKey.cameraCalculator: 'Calculator',
       AppTextKey.cameraChatbot: 'Killbot',
       AppTextKey.calculatorTitle: 'Calculator',
       AppTextKey.calculatorClose: 'Close',
+      AppTextKey.calculatorSolveBadRequest:
+          'Invalid equation or it could not be solved.',
       AppTextKey.calculatorSolveError: 'Could not solve the equation.',
       AppTextKey.chatTitle: 'Chat Assistant',
       AppTextKey.chatTopicLabel: 'Topic',
       AppTextKey.chatTopicHint: 'Ex: Logarithm',
       AppTextKey.chatSubmit: 'Consult',
+      AppTextKey.chatRequestMoreExample: 'Ask for another example',
+      AppTextKey.chatChangeTopic: 'Change topic',
+      AppTextKey.chatRetryTopics: 'Retry topics',
       AppTextKey.chatEmptyResponse: 'No response yet.',
       AppTextKey.chatTopicRequired: 'Enter a topic to continue.',
       AppTextKey.chatConsultError: 'Could not reach the assistant.',
@@ -290,7 +320,8 @@ class AppStringsCatalog {
       AppTextKey.aboutEmail: 'support@killmath.com',
       AppTextKey.aboutAddress: 'Av. Dr. Adolpho Pinto, 109 - São Paulo - SP',
       AppTextKey.helpCenterTitle: 'Centar za pomoć',
-      AppTextKey.helpCenterPlaceholder: 'Ovaj odjeljak uskoro će biti dostupan.',
+      AppTextKey.helpCenterPlaceholder:
+          'Ovaj odjeljak uskoro će biti dostupan.',
       AppTextKey.profileTitle: 'Moj profil',
       AppTextKey.profileLoginTab: 'Prijava',
       AppTextKey.profileRegisterTab: 'Registracija',
@@ -366,7 +397,8 @@ class AppStringsCatalog {
       AppTextKey.aboutEmail: 'support@killmath.com',
       AppTextKey.aboutAddress: 'Av. Dr. Adolpho Pinto, 109 - São Paulo - SP',
       AppTextKey.helpCenterTitle: 'Centrum pomoci',
-      AppTextKey.helpCenterPlaceholder: 'Táto sekcia bude čoskoro k dispozícii.',
+      AppTextKey.helpCenterPlaceholder:
+          'Táto sekcia bude čoskoro k dispozícii.',
       AppTextKey.profileTitle: 'Môj profil',
       AppTextKey.profileLoginTab: 'Prihlásiť sa',
       AppTextKey.profileRegisterTab: 'Registrovať',
@@ -511,7 +543,8 @@ class AppStringsCatalog {
   String text({required AppTextKey key, required String languageCode}) {
     final normalizedCode = _normalize(languageCode);
     final selected =
-        _textsByLanguage[normalizedCode] ?? _textsByLanguage[fallbackLanguageCode]!;
+        _textsByLanguage[normalizedCode] ??
+        _textsByLanguage[fallbackLanguageCode]!;
     return selected[key] ?? _textsByLanguage[fallbackLanguageCode]![key]!;
   }
 

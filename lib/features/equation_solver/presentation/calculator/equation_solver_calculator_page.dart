@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:equation_solver_mobile/dependencies.dart';
+import 'package:equation_solver_mobile/core/http/http_exception.dart';
 import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
 import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 import 'package:equation_solver_mobile/drawables/app_colors.dart';
+import 'package:equation_solver_mobile/drawables/app_top_bar_text_styles.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
 import 'package:flutter/material.dart';
 import 'equation_solver_calculator_controller.dart';
@@ -24,7 +28,10 @@ class EquationSolverCalculatorPage extends StatefulWidget {
 
 class _EquationSolverCalculatorPageState
     extends State<EquationSolverCalculatorPage> {
+  static const _solveDebounceDuration = Duration(seconds: 1);
+
   late EquationSolverCalculatorController _controller;
+  Timer? _solveDebounceTimer;
 
   @override
   void initState() {
@@ -42,6 +49,12 @@ class _EquationSolverCalculatorPageState
     if (expressionIsNotNullOrEmpty) {
       _controller.loadExpression(expression);
     }
+  }
+
+  @override
+  void dispose() {
+    _solveDebounceTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -76,7 +89,7 @@ class _EquationSolverCalculatorPageState
           Center(
             child: Text(
               localeController.text(AppTextKey.calculatorTitle),
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: AppTopBarTextStyles.title(color: Colors.black),
             ),
           ),
           Positioned(
@@ -87,10 +100,7 @@ class _EquationSolverCalculatorPageState
                   : Navigator.of(context).pushReplacementNamed('/camera'),
               child: Text(
                 localeController.text(AppTextKey.calculatorClose),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.selected,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTopBarTextStyles.action(color: AppColors.selected),
               ),
             ),
           ),
@@ -107,12 +117,40 @@ class _EquationSolverCalculatorPageState
     setState(() {});
     if (_controller.solveError != null) {
       final localeController = AppLocalizationScope.of(context);
+      final messageKey = _resolveSolveErrorTextKey(_controller.solveError!);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localeController.text(AppTextKey.calculatorSolveError)),
+          content: Text(localeController.text(messageKey)),
         ),
       );
     }
+  }
+
+  void _scheduleSolveDebounced() {
+    _solveDebounceTimer?.cancel();
+    _solveDebounceTimer = Timer(_solveDebounceDuration, () {
+      if (!mounted) {
+        return;
+      }
+      _handleSolve();
+    });
+  }
+
+  void _runExpressionMutation(VoidCallback action) {
+    final previousExpression = _controller.expression;
+    _setState(action);
+    if (_controller.expression != previousExpression) {
+      _scheduleSolveDebounced();
+    }
+  }
+
+  void _noopSubmit() {}
+
+  AppTextKey _resolveSolveErrorTextKey(Object error) {
+    if (error is HttpException && error.statusCode == 400) {
+      return AppTextKey.calculatorSolveBadRequest;
+    }
+    return AppTextKey.calculatorSolveError;
   }
 
   Widget _buildExpressionDisplay() {
@@ -156,16 +194,6 @@ class _EquationSolverCalculatorPageState
             sol.result,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          if (sol.steps.isNotEmpty) ...
-            sol.steps.map(
-              (s) => Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${s.rule}: ${s.before} → ${s.after}',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -195,7 +223,7 @@ class _EquationSolverCalculatorPageState
                 _buildIconButton(
                   'undo_button',
                   Icons.history,
-                  () => _setState(() => _controller.undo()),
+                  () => _runExpressionMutation(() => _controller.undo()),
                 ),
                 _buildIconButton(
                   'cursor_left_button',
@@ -210,12 +238,13 @@ class _EquationSolverCalculatorPageState
                 _buildIconButton(
                   'submit_button',
                   Icons.keyboard_return,
-                  _handleSolve,
+                  _noopSubmit,
                 ),
                 _buildIconButton(
                   'delete_button',
                   Icons.backspace_outlined,
-                  () => _setState(() => _controller.deleteCharacter()),
+                  () =>
+                      _runExpressionMutation(() => _controller.deleteCharacter()),
                 ),
                 Visibility(
                   visible: false,
@@ -226,7 +255,7 @@ class _EquationSolverCalculatorPageState
                   child: _buildIconButton(
                     'clear_button',
                     Icons.clear,
-                    () => _setState(() => _controller.clear()),
+                    () => _runExpressionMutation(() => _controller.clear()),
                   ),
                 ),
               ],
@@ -330,7 +359,7 @@ class _EquationSolverCalculatorPageState
             ),
           ),
           onPressed: () =>
-              _setState(() => _controller.insertSymbol(symbols[index])),
+              _runExpressionMutation(() => _controller.insertSymbol(symbols[index])),
           child: Text(symbols[index], key: const Key('symbol_button')),
         ),
       ),
@@ -395,8 +424,8 @@ class _EquationSolverCalculatorPageState
         ? const Key('structure_button')
         : const Key('symbol_button');
     final onTap = isStructure
-        ? () => _setState(() => _controller.insertStructure(label))
-        : () => _setState(() => _controller.insertSymbol(label));
+      ? () => _runExpressionMutation(() => _controller.insertStructure(label))
+      : () => _runExpressionMutation(() => _controller.insertSymbol(label));
 
     return ElevatedButton(
       key: widgetKey,
@@ -446,7 +475,9 @@ class _EquationSolverCalculatorPageState
             ),
           ),
           onPressed: () =>
-              _setState(() => _controller.insertStructure(structures[index])),
+              _runExpressionMutation(
+                () => _controller.insertStructure(structures[index]),
+              ),
           child: Text(structures[index], key: const Key('structure_button')),
         ),
       ),

@@ -5,6 +5,23 @@ import '../../../helpers/fake_http_client.dart';
 
 void main() {
   group('ChatAssistantRepositoryImpl', () {
+    test('getAvailableTopics gets topics from api', () async {
+      final httpClient = FakeHttpClient(
+        handler: (_) async => {
+          'topics': ['Logarithm', 'Linear Equations'],
+        },
+      );
+
+      final repository = ChatAssistantRepositoryImpl(httpClient: httpClient);
+
+      final topics = await repository.getAvailableTopics();
+
+      final request = httpClient.requests.single;
+      expect(request.path, '/v1/topics/available');
+      expect(request.method, 'GET');
+      expect(topics, ['Logarithm', 'Linear Equations']);
+    });
+
     test('createConversation posts topic and parses response', () async {
       final httpClient = FakeHttpClient(
         handler: (_) async => {

@@ -230,7 +230,8 @@ void main() {
       await tester.tap(
         find.widgetWithIcon(IconButton, Icons.question_answer_outlined),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byType(ChatAssistantChatPage), findsOneWidget);
     });

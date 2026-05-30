@@ -1,6 +1,7 @@
 import 'package:equation_solver_mobile/core/localization/app_locale_controller.dart';
 import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
 import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
+import 'package:equation_solver_mobile/drawables/app_top_bar_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class LanguageSelectionPage extends StatefulWidget {
@@ -96,22 +97,14 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
             onTap: () => Navigator.of(context).pop(),
             child: Text(
               localeController.text(AppTextKey.languageCancel),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTopBarTextStyles.action(color: Colors.white),
             ),
           ),
           Expanded(
             child: Center(
               child: Text(
                 localeController.text(AppTextKey.languageTitle),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTopBarTextStyles.title(color: Colors.white),
               ),
             ),
           ),
@@ -119,11 +112,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
             onTap: _saveAndClose,
             child: Text(
               localeController.text(AppTextKey.languageDone),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTopBarTextStyles.action(color: Colors.white),
             ),
           ),
         ],

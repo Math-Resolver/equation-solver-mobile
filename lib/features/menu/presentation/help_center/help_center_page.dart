@@ -1,4 +1,5 @@
 import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
+import 'package:equation_solver_mobile/drawables/app_top_bar_text_styles.dart';
 import 'package:equation_solver_mobile/features/menu/presentation/languages/language_selection_page.dart';
 import 'package:flutter/material.dart';
 
@@ -16,13 +17,22 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   static const _faqTextColor = Color(0xFF0B4B92);
   static const _hintColor = Color(0xFF9F9F9F);
 
-  static const _answerText =
-      'Lorem ipsum dolor sit amet. Aut quia exercitationem cum molestiae aliquam qui veniam molestias aut illum magni non pariatur expedita. Qui tempore facere quo quae ipsum';
-
-  static const _faqItems = <String>[
-    'Como funciona?',
-    'Como funciona o chatbot?',
-    'Não tá resolvendo o cálculo!',
+  static const _faqItems = <_FaqItem>[
+    _FaqItem(
+      question: 'Como funciona?',
+      answer:
+          'Use a camera para capturar a equação ou digite manualmente na calculadora. O app processa a expressão e mostra o resultado com os passos de resolução.',
+    ),
+    _FaqItem(
+      question: 'Como funciona o chatbot?',
+      answer:
+          'O Killbot explica tópicos de matemática por assunto. Escolha um tópico, leia a explicação e peça mais exemplos quando quiser aprofundar.',
+    ),
+    _FaqItem(
+      question: 'Não tá resolvendo o cálculo!',
+      answer:
+          'Confira se a equação está legível e bem escrita. Se necessário, ajuste manualmente o texto reconhecido e tente novamente. Também verifique sua conexão com a internet.',
+    ),
   ];
 
   int? _expandedIndex;
@@ -83,28 +93,18 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     return Row(
       children: [
         const SizedBox(width: 54),
-        const Expanded(
+        Expanded(
           child: Text(
             'Centro de ajuda',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 33,
-              fontWeight: FontWeight.w800,
-              height: 1.05,
-            ),
+            style: AppTopBarTextStyles.title(color: Colors.white),
           ),
         ),
         GestureDetector(
           onTap: () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             'Fechar',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 35,
-              fontWeight: FontWeight.w800,
-              height: 1.05,
-            ),
+            style: AppTopBarTextStyles.action(color: Colors.white),
           ),
         ),
       ],
@@ -184,7 +184,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        _faqItems[index],
+                        _faqItems[index].question,
                         style: const TextStyle(
                           color: _faqTextColor,
                           fontSize: 14,
@@ -212,8 +212,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     width: double.infinity,
                     color: _faqBodyColor,
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                    child: const Text(
-                      _answerText,
+                    child: Text(
+                      _faqItems[index].answer,
                       style: TextStyle(
                         color: _faqTextColor,
                         fontSize: 10,
@@ -282,4 +282,11 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       ),
     );
   }
+}
+
+class _FaqItem {
+  const _FaqItem({required this.question, required this.answer});
+
+  final String question;
+  final String answer;
 }

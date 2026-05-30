@@ -9,8 +9,8 @@ class AuthRepositoryImpl implements IAuthRepositoryInterface {
   AuthRepositoryImpl({
     required IHttpClientInterface httpClient,
     required ITokenStorageInterface tokenStorage,
-  })  : _httpClient = httpClient,
-        _tokenStorage = tokenStorage;
+  }) : _httpClient = httpClient,
+       _tokenStorage = tokenStorage;
 
   final IHttpClientInterface _httpClient;
   final ITokenStorageInterface _tokenStorage;
@@ -44,26 +44,14 @@ class AuthRepositoryImpl implements IAuthRepositoryInterface {
   }
 
   @override
-  Future<AuthChallenge> startLogin({required String email}) async {
-    final data = await _httpClient.post(
-      '/v1/auth/login',
-      data: {'email': email}, //TODO Voltar e reecer
-    );
+  Future<AuthChallenge> startLogin() async {
+    final data = await _httpClient.post('/v1/auth/login', data: const {});
     return AuthChallenge.fromJson(data);
   }
 
   @override
-  Future<AuthChallenge> startRegister({
-    required String displayName,
-    required String deviceFingerprint,
-  }) async {
-    final data = await _httpClient.post(
-      '/v1/auth/register',
-      data: {
-        'displayName': displayName,
-        'deviceFingerprint': deviceFingerprint,
-      },
-    );
+  Future<AuthChallenge> startRegister() async {
+    final data = await _httpClient.post('/v1/auth/register', data: const {});
     return AuthChallenge.fromJson(data);
   }
 }

@@ -1,6 +1,32 @@
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/models/equation_solution.dart';
+import 'package:equation_solver_mobile/core/http/http_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class FakeEquationRepository implements IEquationSolverRepositoryInterface {
+  FakeEquationRepository({this.solution, this.solveError});
+
+  final EquationSolution? solution;
+  final Object? solveError;
+  int solveCallCount = 0;
+
+  @override
+  Future<String> getRecognizedText(String path) async => '';
+
+  @override
+  Future<EquationSolution> solveEquation({
+    required String equation,
+    bool showSteps = true,
+  }) async {
+    solveCallCount++;
+    if (solveError != null) {
+      throw solveError!;
+    }
+    return solution ?? const EquationSolution(result: 'x = 1', steps: []);
+  }
+}
 
 void main() {
   group('EquationSolverCalculatorPage', () {
@@ -84,6 +110,86 @@ void main() {
       await tester.pump();
 
       expect(find.text('Camera Page'), findsOneWidget);
+    });
+
+    testWidgets('does not call solve before 1 second of inactivity', (
+      tester,
+    ) async {
+      final repository = FakeEquationRepository();
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCalculatorPage(repository: repository)),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 900));
+
+      expect(repository.solveCallCount, 0);
+    });
+
+    testWidgets('calls solve after 1 second of inactivity', (tester) async {
+      final repository = FakeEquationRepository();
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCalculatorPage(repository: repository)),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(repository.solveCallCount, 1);
+      expect(find.text('x = 1'), findsOneWidget);
+    });
+
+    testWidgets('shows specific message for bad request status 400', (
+      tester,
+    ) async {
+      final repository = FakeEquationRepository(
+        solveError: const HttpException(statusCode: 400, message: 'bad request'),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCalculatorPage(repository: repository)),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Equacao invalida ou nao pode ser resolvida.'), findsOneWidget);
+    });
+
+    testWidgets('does not render solve steps even when API returns steps', (
+      tester,
+    ) async {
+      final repository = FakeEquationRepository(
+        solution: const EquationSolution(
+          result: 'x = 5',
+          steps: [
+            EquationSolveStep(
+              rule: 'subtract 5',
+              before: '2x + 5 = 15',
+              after: '2x = 10',
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCalculatorPage(repository: repository)),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.text('x = 5'), findsOneWidget);
+      expect(find.textContaining('subtract 5'), findsNothing);
     });
   });
 }

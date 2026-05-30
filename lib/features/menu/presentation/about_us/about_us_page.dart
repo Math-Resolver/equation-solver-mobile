@@ -1,5 +1,6 @@
 import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
 import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
+import 'package:equation_solver_mobile/drawables/app_top_bar_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class AboutUsPage extends StatelessWidget {
@@ -23,11 +24,7 @@ class AboutUsPage extends StatelessWidget {
                     child: Center(
                       child: Text(
                         localeController.text(AppTextKey.aboutTitle),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
+                        style: AppTopBarTextStyles.title(color: Colors.white),
                       ),
                     ),
                   ),
@@ -38,11 +35,7 @@ class AboutUsPage extends StatelessWidget {
                       child: Text(
                         localeController.text(AppTextKey.aboutClose),
                         textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
+                        style: AppTopBarTextStyles.action(color: Colors.white),
                       ),
                     ),
                   ),

@@ -95,9 +95,8 @@ class BlockMathInput extends StatelessWidget {
   Widget _buildNode(RowNode owner, int index, MathNode node) {
     switch (node) {
       case PlaceholderNode():
-        final placeholder = node as PlaceholderNode;
         return GestureDetector(
-          key: Key('placeholder_${placeholder.id}'),
+          key: Key('placeholder_${node.id}'),
           onTap: () => onSelectionChanged(owner.id, index),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -108,54 +107,48 @@ class BlockMathInput extends StatelessWidget {
           ),
         );
       case TokenNode():
-        final token = node as TokenNode;
         return GestureDetector(
           onTap: () => onSelectionChanged(owner.id, index + 1),
           child: Text(
-            token.value,
+            node.value,
             style: const TextStyle(fontSize: 18, height: 1.2),
           ),
         );
       case FractionNode():
-        final fraction = node as FractionNode;
         return _buildStructuredNode(
           key: const Key('fraction_node'),
-          node: fraction,
+          node: node,
           child: FractionView(
-            numerator: _buildRow(fraction.numerator),
-            denominator: _buildRow(fraction.denominator),
+            numerator: _buildRow(node.numerator),
+            denominator: _buildRow(node.denominator),
           ),
         );
       case RootNode():
-        final root = node as RootNode;
         return _buildStructuredNode(
           key: const Key('root_node'),
-          node: root,
-          child: RootView(child: _buildRow(root.radicand)),
+          node: node,
+          child: RootView(child: _buildRow(node.radicand)),
         );
       case PowerNode():
-        final power = node as PowerNode;
         return _buildStructuredNode(
           key: const Key('power_node'),
-          node: power,
+          node: node,
           child: PowerView(
-            base: _buildRow(power.base),
-            exponent: _buildRow(power.exponent),
+            base: _buildRow(node.base),
+            exponent: _buildRow(node.exponent),
           ),
         );
       case ParenthesesNode():
-        final parentheses = node as ParenthesesNode;
         return _buildStructuredNode(
           key: const Key('parentheses_node'),
-          node: parentheses,
-          child: ParenthesesView(child: _buildRow(parentheses.content)),
+          node: node,
+          child: ParenthesesView(child: _buildRow(node.content)),
         );
       case AbsoluteNode():
-        final absolute = node as AbsoluteNode;
         return _buildStructuredNode(
           key: const Key('absolute_node'),
-          node: absolute,
-          child: AbsoluteView(child: _buildRow(absolute.content)),
+          node: node,
+          child: AbsoluteView(child: _buildRow(node.content)),
         );
       default:
         return const SizedBox.shrink();
