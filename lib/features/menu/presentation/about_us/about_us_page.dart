@@ -82,15 +82,6 @@ class AboutUsPage extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 18),
-            const Text(
-              'www.killmath.com',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 34,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
             const SizedBox(height: 30),
           ],
         ),

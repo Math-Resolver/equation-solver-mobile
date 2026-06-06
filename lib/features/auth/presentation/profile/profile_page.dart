@@ -15,8 +15,7 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage>
-    {
+class _ProfilePageState extends State<ProfilePage> {
   static const Duration _modeTransitionDuration = Duration(milliseconds: 280);
 
   late ProfilePageController _controller;
@@ -31,9 +30,12 @@ class _ProfilePageState extends State<ProfilePage>
         ProfilePageController(
           authRepository: AppDependencies.instance.authRepository,
           passkeyClient: AppDependencies.instance.passkeyClient,
+          tokenStorage: AppDependencies.instance.tokenStorage,
+          deviceModelProvider: AppDependencies.instance.deviceModelProvider,
         );
     _ownsController = widget.controller == null;
     _controller.addListener(_onControllerChanged);
+    _controller.loadAuthState();
   }
 
   @override
@@ -72,6 +74,12 @@ class _ProfilePageState extends State<ProfilePage>
       _ => locale.text(AppTextKey.profileLoginError),
     };
     _showSingleSnackBar(context, message);
+    if (result == ProfileSubmitStatus.success) {
+      await _showSuccessModalAndGoToCamera(
+        context,
+        locale.text(AppTextKey.profileSuccessRedirecting),
+      );
+    }
   }
 
   Future<void> _onRegisterSubmit(BuildContext context) async {
@@ -95,6 +103,69 @@ class _ProfilePageState extends State<ProfilePage>
       _ => locale.text(AppTextKey.profileRegisterError),
     };
     _showSingleSnackBar(context, message);
+    if (result == ProfileSubmitStatus.success) {
+      await _showSuccessModalAndGoToCamera(
+        context,
+        locale.text(AppTextKey.profileSuccessRedirecting),
+      );
+    }
+  }
+
+  Future<void> _showSuccessModalAndGoToCamera(
+    BuildContext context,
+    String message,
+  ) async {
+    if (!context.mounted) {
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context, rootNavigator: true).pop();
+    _goToCamera(context);
+  }
+
+  Future<void> _onLogoutPressed(BuildContext context) async {
+    if (_controller.isSubmitting) {
+      return;
+    }
+
+    await _controller.logout();
+    if (!context.mounted) {
+      return;
+    }
+
+    _showSingleSnackBar(
+      context,
+      AppLocalizationScope.of(context).text(AppTextKey.profileLogoutSuccess),
+    );
+    _goToCamera(context);
+  }
+
+  void _goToCamera(BuildContext context) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(context).pushReplacementNamed('/camera');
   }
 
   void _showSingleSnackBar(BuildContext context, String message) {
@@ -119,13 +190,89 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   Widget build(BuildContext context) {
     final locale = AppLocalizationScope.of(context);
+
+    if (_controller.isAuthStateLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_controller.isLoggedIn) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        endDrawer: _ProfileMenuDrawer(onGoToCamera: () => _goToCamera(context)),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildLoggedTopBar(context),
+                const Spacer(),
+                _buildLogo(),
+                const SizedBox(height: 14),
+                Text(
+                  locale.text(AppTextKey.profileLoggedInTitle),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF555555),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  '${locale.text(AppTextKey.profileDeviceFingerprintLabel)}: ${_controller.deviceModel}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF4F4F4F),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  key: const Key('profile_logout_button'),
+                  onPressed: _controller.isSubmitting
+                      ? null
+                      : () => _onLogoutPressed(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.selected,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _controller.isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          locale.text(AppTextKey.profileLogoutButton),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final modeTitle = _isLoginMode
         ? locale.text(AppTextKey.profileLoginTab)
         : locale.text(AppTextKey.profileRegisterTab);
     final actionText = _isLoginMode
         ? locale.text(AppTextKey.profileLoginButton)
         : locale.text(AppTextKey.profileRegisterButton);
-    final toggleText = _isLoginMode ? 'Ainda nao tem acesso?' : 'Ja tem acesso?';
+    final toggleText = _isLoginMode
+        ? 'Ainda nao tem acesso?'
+        : 'Ja tem acesso?';
     final toggleActionText = _isLoginMode
         ? locale.text(AppTextKey.profileRegisterTab)
         : locale.text(AppTextKey.profileLoginTab);
@@ -141,14 +288,14 @@ class _ProfilePageState extends State<ProfilePage>
               _buildTopBar(context, modeTitle),
               const Spacer(),
               _buildLogo(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               const Text(
-                'killmath',
+                'Killmath',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF555555),
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 40),
@@ -211,10 +358,8 @@ class _ProfilePageState extends State<ProfilePage>
                   duration: _modeTransitionDuration,
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  ),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
                   child: RichText(
                     key: ValueKey('toggle-$toggleActionText'),
                     text: TextSpan(
@@ -262,10 +407,7 @@ class _ProfilePageState extends State<ProfilePage>
               ).animate(animation);
               return FadeTransition(
                 opacity: animation,
-                child: SlideTransition(
-                  position: offsetAnimation,
-                  child: child,
-                ),
+                child: SlideTransition(position: offsetAnimation, child: child),
               );
             },
             child: Text(
@@ -290,13 +432,39 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  Widget _buildLoggedTopBar(BuildContext context) {
+    final locale = AppLocalizationScope.of(context);
+    return Row(
+      children: [
+        const SizedBox(width: 52),
+        Expanded(
+          child: Text(
+            locale.text(AppTextKey.menuProfile),
+            textAlign: TextAlign.center,
+            style: AppTopBarTextStyles.title(color: Colors.black),
+          ),
+        ),
+        Builder(
+          builder: (innerContext) => GestureDetector(
+            key: const Key('profile_menu_button'),
+            onTap: () => Scaffold.of(innerContext).openEndDrawer(),
+            child: Text(
+              locale.text(AppTextKey.profileMenuButton),
+              style: AppTopBarTextStyles.action(color: AppColors.selected),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildLogo() {
     return Center(
       child: Container(
-        width: 88,
-        height: 88,
+        width: 72,
+        height: 72,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -304,8 +472,42 @@ class _ProfilePageState extends State<ProfilePage>
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Image.asset('assets/images/killmath_logo.png'),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileMenuDrawer extends StatelessWidget {
+  const _ProfileMenuDrawer({required this.onGoToCamera});
+
+  final VoidCallback onGoToCamera;
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 10),
+              child: Text(
+                'Menu',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Ir para câmera'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onGoToCamera();
+              },
+            ),
+          ],
         ),
       ),
     );

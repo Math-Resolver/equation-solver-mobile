@@ -9,14 +9,20 @@ import 'package:equation_solver_mobile/features/equation_solver/presentation/cam
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_focus_rectangle.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_instruction_text.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/widgets/equation_solver_menu_button.dart';
+import 'package:equation_solver_mobile/dependencies.dart';
 import 'package:equation_solver_mobile/core/localization/app_localization_scope.dart';
 import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 import 'package:flutter/material.dart';
 
 class EquationSolverCameraPage extends StatefulWidget {
-  const EquationSolverCameraPage({required this.controller, super.key});
+  const EquationSolverCameraPage({
+    required this.controller,
+    this.canAccessChat,
+    super.key,
+  });
 
   final EquationSolverCameraController controller;
+  final Future<bool> Function()? canAccessChat;
 
   @override
   State<EquationSolverCameraPage> createState() =>
@@ -126,8 +132,7 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
       children: [
         IconButton(
           icon: const Icon(Icons.question_answer_outlined, color: Colors.white),
-          onPressed: () =>
-              _navigateTo(const ChatAssistantChatPage(equation: '')),
+          onPressed: _handleChatButtonPressed,
         ),
         Text(
           localeController.text(AppTextKey.cameraChatbot),
@@ -138,6 +143,30 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _handleChatButtonPressed() async {
+    final localeController = AppLocalizationScope.of(context);
+    final chatAccess =
+        widget.canAccessChat ??
+        () async =>
+            (await AppDependencies.instance.tokenStorage.readAccessToken()) !=
+            null;
+
+    final canAccess = await chatAccess();
+    if (!mounted) return;
+    if (!canAccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            localeController.text(AppTextKey.cameraChatLoginRequired),
+          ),
+        ),
+      );
+      return;
+    }
+
+    _navigateTo(const ChatAssistantChatPage(equation: ''));
   }
 
   void _toggleFlash() {

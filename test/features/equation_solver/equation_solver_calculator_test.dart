@@ -51,12 +51,12 @@ void main() {
       expect(find.text('7'), findsWidgets);
     });
 
-    testWidgets('inserts root structure and renders root node', (tester) async {
+    testWidgets('renders root node from initial expression', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: EquationSolverCalculatorPage()),
+        const MaterialApp(
+          home: EquationSolverCalculatorPage(initialExpression: '√(9)'),
+        ),
       );
-
-      await tester.tap(find.byKey(const Key('structure_button_√')));
       await tester.pump();
 
       expect(find.byKey(const Key('root_node')), findsOneWidget);
@@ -163,7 +163,7 @@ void main() {
       expect(find.text('Equacao invalida ou nao pode ser resolvida.'), findsOneWidget);
     });
 
-    testWidgets('does not render solve steps even when API returns steps', (
+    testWidgets('opens modal with solve steps when response has steps', (
       tester,
     ) async {
       final repository = FakeEquationRepository(
@@ -189,7 +189,91 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('x = 5'), findsOneWidget);
-      expect(find.textContaining('subtract 5'), findsNothing);
+      expect(find.byKey(const Key('solve_steps_open_button')), findsOneWidget);
+      expect(find.byKey(const Key('solve_steps_modal_list')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('solve_steps_open_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Passo 1 de 1'), findsOneWidget);
+      expect(find.text('subtract 5'), findsOneWidget);
+      expect(find.text('2x + 5 = 15'), findsOneWidget);
+      expect(find.text('2x = 10'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('solve_steps_modal_close_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Passo 1 de 1'), findsNothing);
+    });
+
+    testWidgets('navigates between animated solve steps', (tester) async {
+      final repository = FakeEquationRepository(
+        solution: const EquationSolution(
+          result: 'x = 3',
+          steps: [
+            EquationSolveStep(
+              rule: 'subtract 4',
+              before: '2x + 4 = 10',
+              after: '2x = 6',
+            ),
+            EquationSolveStep(
+              rule: 'divide by 2',
+              before: '2x = 6',
+              after: 'x = 3',
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCalculatorPage(repository: repository)),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('solve_steps_open_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Passo 1 de 2'), findsOneWidget);
+      expect(find.text('subtract 4'), findsOneWidget);
+      expect(find.text('2x + 4 = 10'), findsOneWidget);
+      expect(find.text('2x = 6'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('solve_steps_next_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Passo 2 de 2'), findsOneWidget);
+      expect(find.text('divide by 2'), findsOneWidget);
+      expect(find.text('x = 3'), findsWidgets);
+      expect(find.byKey(const Key('solve_steps_next_button')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('solve_steps_previous_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Passo 1 de 2'), findsOneWidget);
+    });
+
+    testWidgets('does not show step modal CTA when response has no steps', (
+      tester,
+    ) async {
+      final repository = FakeEquationRepository(
+        solution: const EquationSolution(result: 'x = 5', steps: []),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: EquationSolverCalculatorPage(repository: repository)),
+      );
+
+      await tester.tap(find.byKey(const Key('symbol_button_7')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.text('x = 5'), findsOneWidget);
+      expect(find.byKey(const Key('solve_steps_open_button')), findsNothing);
     });
   });
 }

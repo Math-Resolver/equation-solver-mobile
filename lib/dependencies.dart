@@ -1,7 +1,9 @@
+import 'package:equation_solver_mobile/core/auth/mock_passkey_client_impl.dart';
 import 'package:equation_solver_mobile/core/auth/passkey_client_impl.dart';
 import 'package:equation_solver_mobile/core/auth/passkey_client_interface.dart';
 import 'package:equation_solver_mobile/core/auth/secure_token_storage.dart';
 import 'package:equation_solver_mobile/core/auth/token_storage_interface.dart';
+import 'package:equation_solver_mobile/core/device/device_model_provider.dart';
 import 'package:equation_solver_mobile/core/config/api_config.dart';
 import 'package:equation_solver_mobile/core/http/http_client_factory.dart';
 import 'package:equation_solver_mobile/core/http/http_client_interface.dart';
@@ -19,6 +21,7 @@ import 'package:equation_solver_mobile/features/menu/repository/language_prefere
 class AppDependencies {
   AppDependencies._({
     required this.tokenStorage,
+    required this.deviceModelProvider,
     required this.passkeyClient,
     required this.httpClient,
     required this.equationRepository,
@@ -29,6 +32,7 @@ class AppDependencies {
   });
 
   final ITokenStorageInterface tokenStorage;
+  final IDeviceModelProvider deviceModelProvider;
   final IPasskeyClientInterface passkeyClient;
   final IHttpClientInterface httpClient;
   final IEquationSolverRepositoryInterface equationRepository;
@@ -46,7 +50,10 @@ class AppDependencies {
 
   static AppDependencies create() {
     final tokenStorage = SecureTokenStorage();
-    final passkeyClient = PasskeyClientImpl();
+    final deviceModelProvider = DeviceModelProvider();
+    final passkeyClient = ApiConfig.useApiMock
+        ? MockPasskeyClientImpl()
+        : PasskeyClientImpl();
     final httpClient = ApiConfig.useApiMock
         ? MockApiHttpClient(
             scenario: ApiConfig.mockApiScenario,
@@ -63,6 +70,7 @@ class AppDependencies {
     );
     return AppDependencies._(
       tokenStorage: tokenStorage,
+      deviceModelProvider: deviceModelProvider,
       passkeyClient: passkeyClient,
       httpClient: httpClient,
       equationRepository: EquationSolverRepositoryImpl(httpClient: httpClient),

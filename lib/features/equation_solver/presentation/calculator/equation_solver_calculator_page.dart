@@ -7,6 +7,7 @@ import 'package:equation_solver_mobile/core/localization/app_text_key.dart';
 import 'package:equation_solver_mobile/drawables/app_colors.dart';
 import 'package:equation_solver_mobile/drawables/app_top_bar_text_styles.dart';
 import 'package:equation_solver_mobile/features/equation_solver/repository/equation_solver_repository_interface.dart';
+import 'package:equation_solver_mobile/features/equation_solver/repository/models/equation_solution.dart';
 import 'package:flutter/material.dart';
 import 'equation_solver_calculator_controller.dart';
 import 'widgets/block_math_input.dart';
@@ -119,9 +120,7 @@ class _EquationSolverCalculatorPageState
       final localeController = AppLocalizationScope.of(context);
       final messageKey = _resolveSolveErrorTextKey(_controller.solveError!);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(localeController.text(messageKey)),
-        ),
+        SnackBar(content: Text(localeController.text(messageKey))),
       );
     }
   }
@@ -177,6 +176,7 @@ class _EquationSolverCalculatorPageState
     }
     final sol = _controller.solution;
     if (sol == null) return const SizedBox.shrink();
+    final hasSteps = sol.steps.isNotEmpty;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -194,8 +194,38 @@ class _EquationSolverCalculatorPageState
             sol.result,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
+          if (hasSteps) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('solve_steps_open_button'),
+                onPressed: () => _openSolveStepsModal(sol),
+                icon: const Icon(Icons.format_list_numbered),
+                label: const Text('Ver passo a passo'),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Future<void> _openSolveStepsModal(EquationSolution solution) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (modalContext) {
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.75,
+            child: _SolveStepsModal(
+              solution: solution,
+              onClose: () => Navigator.of(modalContext).pop(),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -243,8 +273,9 @@ class _EquationSolverCalculatorPageState
                 _buildIconButton(
                   'delete_button',
                   Icons.backspace_outlined,
-                  () =>
-                      _runExpressionMutation(() => _controller.deleteCharacter()),
+                  () => _runExpressionMutation(
+                    () => _controller.deleteCharacter(),
+                  ),
                 ),
                 Visibility(
                   visible: false,
@@ -358,8 +389,9 @@ class _EquationSolverCalculatorPageState
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: () =>
-              _runExpressionMutation(() => _controller.insertSymbol(symbols[index])),
+          onPressed: () => _runExpressionMutation(
+            () => _controller.insertSymbol(symbols[index]),
+          ),
           child: Text(symbols[index], key: const Key('symbol_button')),
         ),
       ),
@@ -424,8 +456,8 @@ class _EquationSolverCalculatorPageState
         ? const Key('structure_button')
         : const Key('symbol_button');
     final onTap = isStructure
-      ? () => _runExpressionMutation(() => _controller.insertStructure(label))
-      : () => _runExpressionMutation(() => _controller.insertSymbol(label));
+        ? () => _runExpressionMutation(() => _controller.insertStructure(label))
+        : () => _runExpressionMutation(() => _controller.insertSymbol(label));
 
     return ElevatedButton(
       key: widgetKey,
@@ -474,10 +506,9 @@ class _EquationSolverCalculatorPageState
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: () =>
-              _runExpressionMutation(
-                () => _controller.insertStructure(structures[index]),
-              ),
+          onPressed: () => _runExpressionMutation(
+            () => _controller.insertStructure(structures[index]),
+          ),
           child: Text(structures[index], key: const Key('structure_button')),
         ),
       ),
@@ -486,5 +517,221 @@ class _EquationSolverCalculatorPageState
 
   void _setState(VoidCallback fn) {
     setState(fn);
+  }
+}
+
+class _SolveStepsModal extends StatefulWidget {
+  const _SolveStepsModal({required this.solution, required this.onClose});
+
+  final EquationSolution solution;
+  final VoidCallback onClose;
+
+  @override
+  State<_SolveStepsModal> createState() => _SolveStepsModalState();
+}
+
+class _SolveStepsModalState extends State<_SolveStepsModal> {
+  static const _animationDuration = Duration(milliseconds: 260);
+
+  int _currentStepIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = widget.solution.steps;
+    final currentStep = steps[_currentStepIndex];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Passo a passo',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+              IconButton(
+                key: const Key('solve_steps_modal_close_button'),
+                onPressed: widget.onClose,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Passo ${_currentStepIndex + 1} de ${steps.length}',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: _animationDuration,
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final slide = Tween<Offset>(
+                    begin: const Offset(0.18, 0),
+                    end: Offset.zero,
+                  ).animate(animation);
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(position: slide, child: child),
+                  );
+                },
+                child: _SolveStepCard(
+                  key: ValueKey(_currentStepIndex),
+                  step: currentStep,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const Key('solve_steps_previous_button'),
+                  onPressed: _currentStepIndex == 0
+                      ? null
+                      : () => setState(() => _currentStepIndex -= 1),
+                  icon: const Icon(Icons.chevron_left),
+                  label: const Text('Anterior'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.selected,
+                    side: const BorderSide(color: AppColors.selected),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  key: const Key('solve_steps_next_button'),
+                  onPressed: _currentStepIndex >= steps.length - 1
+                      ? widget.onClose
+                      : () => setState(() => _currentStepIndex += 1),
+                  icon: Icon(
+                    _currentStepIndex >= steps.length - 1
+                        ? Icons.check
+                        : Icons.chevron_right,
+                  ),
+                  label: Text(
+                    _currentStepIndex >= steps.length - 1
+                        ? 'Concluir'
+                        : 'Proximo',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.selected,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SolveStepCard extends StatelessWidget {
+  const _SolveStepCard({super.key, required this.step});
+
+  final EquationSolveStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 18,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            step.rule,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.selected.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Antes',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  step.before,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.selected.withValues(alpha: 0.22),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Depois',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  step.after,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

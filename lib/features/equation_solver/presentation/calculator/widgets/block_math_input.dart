@@ -26,31 +26,28 @@ class BlockMathInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEmpty = state.root.children.isEmpty;
 
-    return CustomPaint(
-      painter: _DashedBottomBorderPainter(),
-      child: Container(
-        key: const Key('expression_display'),
-        width: double.infinity,
-        alignment: Alignment.topLeft,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: isEmpty
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildCursorSlot(state.root.id, 0),
-                    Text(
-                      'Digite um problema matematico..',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.placeholderText,
-                      ),
+    return Container(
+      key: const Key('expression_display'),
+      width: double.infinity,
+      alignment: Alignment.topLeft,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: isEmpty
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildCursorSlot(state.root.id, 0),
+                  Text(
+                    'Digite um problema matematico..',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.placeholderText,
                     ),
-                  ],
-                )
-              : _buildRow(state.root),
-        ),
+                  ),
+                ],
+              )
+            : _buildRow(state.root),
       ),
     );
   }
@@ -173,31 +170,4 @@ class BlockMathInput extends StatelessWidget {
       onSelectionChanged(primaryRow.id, 0);
     }
   }
-}
-
-class _DashedBottomBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFBBBBBB)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    const dashWidth = 5.0;
-    const dashSpace = 4.0;
-    double startX = 0;
-    final y = size.height;
-
-    while (startX < size.width) {
-      canvas.drawLine(
-        Offset(startX, y),
-        Offset((startX + dashWidth).clamp(0, size.width), y),
-        paint,
-      );
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedBottomBorderPainter oldDelegate) => false;
 }

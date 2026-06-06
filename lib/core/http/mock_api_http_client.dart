@@ -86,10 +86,10 @@ class MockApiHttpClient implements IHttpClientInterface {
       case '/v1/auth/register':
         return {
           'challenge': 'mock-challenge-token',
-          'relyingParty': {'id': 'killmath.dev', 'name': 'KillMath'},
+          'relyingParty': {'id': 'killmath', 'name': 'KillMath'},
           'user': {
             'id': 'mock-user-id',
-            'name': 'mock-user@killmath.dev',
+            'name': 'mock-user',
             'displayName': 'Mock User',
           },
         };
@@ -127,8 +127,13 @@ class MockApiHttpClient implements IHttpClientInterface {
           'result': 'x = 3',
           'steps': [
             {
-              'rule': 'Subtract 2 from both sides',
-              'before': 'x + 2 = 5',
+              'rule': 'Subtract 4 from both sides',
+              'before': '2x + 4 = 10',
+              'after': '2x = 6',
+            },
+            {
+              'rule': 'Divide both sides by 2',
+              'before': '2x = 6',
               'after': 'x = 3',
             },
           ],

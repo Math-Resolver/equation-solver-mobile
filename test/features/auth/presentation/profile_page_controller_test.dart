@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:equation_solver_mobile/core/auth/passkey_client_interface.dart';
+import 'package:equation_solver_mobile/core/auth/token_storage_interface.dart';
+import 'package:equation_solver_mobile/core/device/device_model_provider.dart';
 import 'package:equation_solver_mobile/core/auth/token_pair.dart';
 import 'package:equation_solver_mobile/features/auth/presentation/profile/profile_page_controller.dart';
 import 'package:equation_solver_mobile/features/auth/repository/auth_repository_interface.dart';
@@ -12,9 +14,15 @@ class MockAuthRepository extends Mock implements IAuthRepositoryInterface {}
 
 class MockPasskeyClient extends Mock implements IPasskeyClientInterface {}
 
+class MockTokenStorage extends Mock implements ITokenStorageInterface {}
+
+class MockDeviceModelProvider extends Mock implements IDeviceModelProvider {}
+
 void main() {
   late MockAuthRepository authRepository;
   late MockPasskeyClient passkeyClient;
+  late MockTokenStorage tokenStorage;
+  late MockDeviceModelProvider deviceModelProvider;
   late ProfilePageController controller;
 
   const challenge = AuthChallenge(
@@ -26,9 +34,20 @@ void main() {
   setUp(() {
     authRepository = MockAuthRepository();
     passkeyClient = MockPasskeyClient();
+    tokenStorage = MockTokenStorage();
+    deviceModelProvider = MockDeviceModelProvider();
+
+    when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => null);
+    when(
+      () => deviceModelProvider.readDisplayModel(),
+    ).thenAnswer((_) async => 'SM-G780G');
+    when(() => tokenStorage.clear()).thenAnswer((_) async {});
+
     controller = ProfilePageController(
       authRepository: authRepository,
       passkeyClient: passkeyClient,
+      tokenStorage: tokenStorage,
+      deviceModelProvider: deviceModelProvider,
     );
   });
 
@@ -120,7 +139,9 @@ void main() {
 
     test('ignores second login submit while first is running', () async {
       final completer = Completer<AuthChallenge>();
-      when(() => authRepository.startLogin()).thenAnswer((_) => completer.future);
+      when(
+        () => authRepository.startLogin(),
+      ).thenAnswer((_) => completer.future);
 
       final firstCall = controller.loginWithPasskey();
       final secondCall = controller.loginWithPasskey();
@@ -212,5 +233,43 @@ void main() {
         expect(controller.isSubmitting, isFalse);
       },
     );
+  });
+
+  group('ProfilePageController auth state', () {
+    test('loadAuthState sets logged out state when token is missing', () async {
+      when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => null);
+
+      await controller.loadAuthState();
+
+      expect(controller.isLoggedIn, isFalse);
+      expect(controller.deviceModel, 'Unknown device');
+    });
+
+    test('loadAuthState sets logged in state and reads device model', () async {
+      when(
+        () => tokenStorage.readAccessToken(),
+      ).thenAnswer((_) async => 'access-token');
+      when(
+        () => deviceModelProvider.readDisplayModel(),
+      ).thenAnswer((_) async => 'SM-G780G');
+
+      await controller.loadAuthState();
+
+      expect(controller.isLoggedIn, isTrue);
+      expect(controller.deviceModel, 'SM-G780G');
+    });
+
+    test('logout clears token storage and resets state', () async {
+      when(
+        () => tokenStorage.readAccessToken(),
+      ).thenAnswer((_) async => 'access-token');
+      await controller.loadAuthState();
+
+      await controller.logout();
+
+      verify(() => tokenStorage.clear()).called(1);
+      expect(controller.isLoggedIn, isFalse);
+      expect(controller.deviceModel, 'Unknown device');
+    });
   });
 }

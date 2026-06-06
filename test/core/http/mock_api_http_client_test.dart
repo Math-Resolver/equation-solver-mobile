@@ -87,6 +87,12 @@ void main() {
 
       expect((data['result'] ?? '').toString().isNotEmpty, isTrue);
       expect(data['steps'], isA<List<dynamic>>());
+      final steps = data['steps'] as List<dynamic>;
+      expect(steps.length, greaterThanOrEqualTo(2));
+      final firstStep = steps.first as Map<String, dynamic>;
+      expect((firstStep['rule'] ?? '').toString().isNotEmpty, isTrue);
+      expect((firstStep['before'] ?? '').toString().isNotEmpty, isTrue);
+      expect((firstStep['after'] ?? '').toString().isNotEmpty, isTrue);
     });
   });
 
