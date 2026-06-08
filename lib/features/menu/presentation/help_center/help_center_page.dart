@@ -2,6 +2,7 @@ import 'package:equation_solver_mobile/core/localization/app_localization_scope.
 import 'package:equation_solver_mobile/drawables/app_top_bar_text_styles.dart';
 import 'package:equation_solver_mobile/features/menu/presentation/languages/language_selection_page.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HelpCenterPage extends StatefulWidget {
   const HelpCenterPage({super.key});
@@ -11,11 +12,18 @@ class HelpCenterPage extends StatefulWidget {
 }
 
 class _HelpCenterPageState extends State<HelpCenterPage> {
+  final TextEditingController _messageController = TextEditingController();
   static const _pageColor = Color(0xFF0E4F95);
   static const _faqHeaderColor = Color(0xFFF2F2F2);
   static const _faqBodyColor = Color(0xFF9FD7EE);
   static const _faqTextColor = Color(0xFF0B4B92);
   static const _hintColor = Color(0xFF9F9F9F);
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
 
   static const _faqItems = <_FaqItem>[
     _FaqItem(
@@ -134,7 +142,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
 
   Widget _buildMessageField() {
     return TextField(
-      readOnly: true,
+      controller: _messageController,
+      textInputAction: TextInputAction.send,
+      onSubmitted: (_) => _sendEmail(),
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
@@ -148,7 +158,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
           horizontal: 16,
           vertical: 14,
         ),
-        suffixIcon: const Icon(Icons.search, color: _hintColor),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.send, color: _hintColor),
+          onPressed: _sendEmail,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
@@ -281,6 +294,18 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _sendEmail() async {
+    final body = Uri.encodeComponent(_messageController.text);
+
+    final uri = Uri.parse(
+      'mailto:killmath.support@gmail.com?subject=Suporte KillMath&body=$body',
+    );
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }
 

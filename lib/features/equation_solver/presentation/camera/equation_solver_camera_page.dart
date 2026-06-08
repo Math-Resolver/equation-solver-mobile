@@ -1,4 +1,6 @@
 import 'package:camera/camera.dart';
+import 'package:equation_solver_mobile/drawables/app_colors.dart';
+import 'package:equation_solver_mobile/features/auth/presentation/profile/profile_page.dart';
 import 'package:equation_solver_mobile/features/chat_assistant/presentation/chat/chat_assistant_chat_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/calculator/equation_solver_calculator_page.dart';
 import 'package:equation_solver_mobile/features/equation_solver/presentation/camera/equation_solver_camera_controller.dart';
@@ -146,7 +148,6 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
   }
 
   Future<void> _handleChatButtonPressed() async {
-    final localeController = AppLocalizationScope.of(context);
     final chatAccess =
         widget.canAccessChat ??
         () async =>
@@ -156,17 +157,71 @@ class _EquationSolverCameraPageState extends State<EquationSolverCameraPage> {
     final canAccess = await chatAccess();
     if (!mounted) return;
     if (!canAccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            localeController.text(AppTextKey.cameraChatLoginRequired),
-          ),
-        ),
-      );
+      await _showChatLoginRequiredModal();
       return;
     }
 
     _navigateTo(const ChatAssistantChatPage(equation: ''));
+  }
+
+  Future<void> _showChatLoginRequiredModal() async {
+    final localeController = AppLocalizationScope.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
+          title: Text(
+            localeController.text(AppTextKey.oopsErrorTitle),
+            style: const TextStyle(   
+              fontWeight: FontWeight.bold,
+              fontSize: 30,
+              color: AppColors.selected)
+              ),
+          content: Text(
+            localeController.text(AppTextKey.cameraChatLoginRequired),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsOverflowButtonSpacing: 12,
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _navigateTo(const ProfilePage());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.selected,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Text(
+                localeController.text(AppTextKey.cameraChatAuthenticateAction),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.unselected,
+                foregroundColor: AppColors.selected,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Text(
+                localeController.text(AppTextKey.cameraChatDismissAction),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _toggleFlash() {

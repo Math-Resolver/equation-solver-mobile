@@ -447,9 +447,9 @@ class _ProfilePageState extends State<ProfilePage> {
         Builder(
           builder: (innerContext) => GestureDetector(
             key: const Key('profile_menu_button'),
-            onTap: () => Scaffold.of(innerContext).openEndDrawer(),
+            onTap: () => Navigator.of(context).pop(),
             child: Text(
-              locale.text(AppTextKey.profileMenuButton),
+              locale.text(AppTextKey.calculatorClose),
               style: AppTopBarTextStyles.action(color: AppColors.selected),
             ),
           ),

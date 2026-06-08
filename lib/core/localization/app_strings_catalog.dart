@@ -81,6 +81,7 @@ class AppStringsCatalog {
       AppTextKey.profileLoginButton: 'Entrar',
       AppTextKey.profileRegisterButton: 'Criar conta',
       AppTextKey.profileLoginError: 'Não foi possível fazer login.',
+      AppTextKey.oopsErrorTitle: 'Oops!',
       AppTextKey.profileRegisterError: 'Não foi possível criar a conta.',
       AppTextKey.profilePasskeyUnavailable:
           'Passkey indisponivel neste dispositivo.',
@@ -97,7 +98,9 @@ class AppStringsCatalog {
       AppTextKey.cameraCalculator: 'Calculadora',
       AppTextKey.cameraChatbot: 'Killbot',
         AppTextKey.cameraChatLoginRequired:
-          'Faça login para acessar o Killbot.',
+          'É necessário estar autenticado para acessar o Killbot.',
+      AppTextKey.cameraChatAuthenticateAction: 'Quero me autenticar',
+      AppTextKey.cameraChatDismissAction: 'Ok',
       AppTextKey.calculatorTitle: 'Calculadora',
       AppTextKey.calculatorClose: 'Fechar',
       AppTextKey.calculatorSolveBadRequest:
@@ -138,6 +141,7 @@ class AppStringsCatalog {
       AppTextKey.profileRegisterButton: 'Create account',
       AppTextKey.profileLoginError: 'Could not log in.',
       AppTextKey.profileRegisterError: 'Could not create account.',
+      AppTextKey.oopsErrorTitle: 'Oops!',
       AppTextKey.profilePasskeyUnavailable:
           'Passkey is unavailable on this device.',
       AppTextKey.profileLoginSuccess: 'Logged in successfully.',
@@ -153,7 +157,9 @@ class AppStringsCatalog {
       AppTextKey.cameraCalculator: 'Calculator',
       AppTextKey.cameraChatbot: 'Killbot',
         AppTextKey.cameraChatLoginRequired:
-          'Please log in to access Killbot.',
+          'It is necessary to be authenticated to access Killbot.',
+      AppTextKey.cameraChatAuthenticateAction: 'I want to authenticate',
+      AppTextKey.cameraChatDismissAction: 'OK',
       AppTextKey.calculatorTitle: 'Calculator',
       AppTextKey.calculatorClose: 'Close',
       AppTextKey.calculatorSolveBadRequest:

@@ -19,11 +19,13 @@ dependencies:
   google_mlkit_text_recognition: ^0.11.0
   image: ^4.5.4
   image_picker: ^1.2.1
+  url_launcher: ^6.3.0
   local_auth: ^2.3.0
   shared_preferences: ^2.5.3
 
 
 dev_dependencies:
+  url_launcher: ^6.3.0
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
