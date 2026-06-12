@@ -10,6 +10,15 @@ class ChatAssistantRepositoryImpl implements IChatAssistantRepositoryInterface {
   final IHttpClientInterface _httpClient;
 
   @override
+  Future<List<String>> getAvailableTopics() async {
+    final data = await _httpClient.get('/v1/topics/available');
+    final topics = (data['topics'] as List<dynamic>? ?? const <dynamic>[]);
+    return topics
+        .whereType<String>()
+        .toList(growable: false);
+  }
+
+  @override
   Future<ConversationResponse> createConversation({
     required String topic,
   }) async {

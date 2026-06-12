@@ -44,7 +44,7 @@ class _EquationSolverSplashPageState extends State<EquationSolverSplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.splashBackground,
+      backgroundColor: AppColors.selected,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -60,7 +60,7 @@ class _EquationSolverSplashPageState extends State<EquationSolverSplashPage> {
             const Text(
               'killmath',
               style: TextStyle(
-                color: AppColors.splashText,
+                color: AppColors.splashBackground,
                 fontSize: 34,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,

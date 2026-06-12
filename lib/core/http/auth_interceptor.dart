@@ -22,11 +22,16 @@ class AuthInterceptor extends Interceptor {
     final hasAuthorizationHeader = options.headers.containsKey('Authorization');
     if (!hasAuthorizationHeader) {
       final token = await _tokenStorage.readAccessToken();
-      if (token != null && token.isNotEmpty) {
-        options.headers['Authorization'] = 'Bearer $token';
-      }
+      options.headers['Authorization'] = _buildAuthorizationHeader(token);
     }
     handler.next(options);
+  }
+
+  String _buildAuthorizationHeader(String? token) {
+    if (token != null && token.isNotEmpty) {
+      return 'Bearer $token';
+    }
+    return 'Bearer dev-user:null';
   }
 
   @override
@@ -38,7 +43,7 @@ class AuthInterceptor extends Interceptor {
     if (isUnauthorized) {
       await _tokenStorage.clear();
       if (_onUnauthorized != null) {
-        await _onUnauthorized!();
+        await _onUnauthorized();
       }
     }
     handler.next(err);

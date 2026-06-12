@@ -32,29 +32,59 @@ class InMemoryTokenStorage implements ITokenStorageInterface {
 
 void main() {
   group('AuthRepositoryImpl', () {
-    test('startLogin sends email and parses challenge payload', () async {
-      final httpClient = FakeHttpClient(
-        handler: (request) async => {
-          'challenge': 'abc123',
-          'relyingParty': {'id': 'seuapp.com', 'name': 'Seu App'},
-          'user': {'id': 'uuid-123', 'username': 'user@email.com'},
-        },
-      );
+    test(
+      'startLogin sends request without form payload and parses challenge',
+      () async {
+        final httpClient = FakeHttpClient(
+          handler: (request) async => {
+            'challenge': 'abc123',
+            'relyingParty': {'id': 'seuapp.com', 'name': 'Seu App'},
+            'user': {'id': 'uuid-123', 'username': 'user@email.com'},
+          },
+        );
 
-      final repository = AuthRepositoryImpl(
-        httpClient: httpClient,
-        tokenStorage: InMemoryTokenStorage(),
-      );
+        final repository = AuthRepositoryImpl(
+          httpClient: httpClient,
+          tokenStorage: InMemoryTokenStorage(),
+        );
 
-      final challenge = await repository.startLogin(email: 'user@email.com');
+        final challenge = await repository.startLogin();
 
-      final request = httpClient.requests.single;
-      expect(request.path, '/v1/auth/login');
-      expect(request.method, 'POST');
-      expect(request.data, {'email': 'user@email.com'});
-      expect(challenge.challenge, 'abc123');
-      expect(challenge.user['username'], 'user@email.com');
-    });
+        final request = httpClient.requests.single;
+        expect(request.path, '/v1/auth/login');
+        expect(request.method, 'POST');
+        expect(request.data, const {});
+        expect(challenge.challenge, 'abc123');
+        expect(challenge.user['username'], 'user@email.com');
+      },
+    );
+
+    test(
+      'startRegister sends request without form payload and parses challenge',
+      () async {
+        final httpClient = FakeHttpClient(
+          handler: (request) async => {
+            'challenge': 'register-123',
+            'relyingParty': {'id': 'seuapp.com', 'name': 'Seu App'},
+            'user': {'id': 'uuid-456', 'username': 'user@email.com'},
+          },
+        );
+
+        final repository = AuthRepositoryImpl(
+          httpClient: httpClient,
+          tokenStorage: InMemoryTokenStorage(),
+        );
+
+        final challenge = await repository.startRegister();
+
+        final request = httpClient.requests.single;
+        expect(request.path, '/v1/auth/register');
+        expect(request.method, 'POST');
+        expect(request.data, const {});
+        expect(challenge.challenge, 'register-123');
+        expect(challenge.user['username'], 'user@email.com');
+      },
+    );
 
     test('finishLogin saves access and refresh tokens', () async {
       final tokenStorage = InMemoryTokenStorage();

@@ -77,5 +77,23 @@ void main() {
       expect(await storage.readAccessToken(), isNull);
       expect(await storage.readRefreshToken(), isNull);
     });
+
+    test('adds dev-user:null bearer when access token is missing', () async {
+      late RequestOptions capturedRequest;
+      final storage = InMemoryTokenStorage(accessToken: null);
+
+      final dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8000'));
+      dio.interceptors.add(AuthInterceptor(tokenStorage: storage));
+      dio.httpClientAdapter = FakeHttpClientAdapter(
+        handler: (options) async {
+          capturedRequest = options;
+          return const FakeAdapterResponse(statusCode: 200, data: {'ok': true});
+        },
+      );
+
+      await dio.post('/v1/equation/solve', data: {'equation': 'x=1'});
+
+      expect(capturedRequest.headers['Authorization'], 'Bearer dev-user:null');
+    });
   });
 }

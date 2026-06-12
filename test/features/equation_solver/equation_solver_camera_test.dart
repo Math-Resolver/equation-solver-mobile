@@ -212,7 +212,7 @@ void main() {
       expect(find.byType(EquationSolverCalculatorPage), findsOneWidget);
     });
 
-    testWidgets('tapping chat icon navigates to chat page', (
+    testWidgets('tapping chat icon navigates to chat page when logged in', (
       WidgetTester tester,
     ) async {
       controller = StubCameraController(
@@ -223,16 +223,121 @@ void main() {
       when(() => cameraController.value).thenReturn(cameraValue);
 
       await tester.pumpWidget(
-        MaterialApp(home: EquationSolverCameraPage(controller: controller)),
+        MaterialApp(
+          home: EquationSolverCameraPage(
+            controller: controller,
+            canAccessChat: () async => true,
+          ),
+        ),
       );
       await tester.pumpAndSettle();
 
       await tester.tap(
         find.widgetWithIcon(IconButton, Icons.question_answer_outlined),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byType(ChatAssistantChatPage), findsOneWidget);
+    });
+
+    testWidgets(
+      'tapping chat icon shows login-required modal and blocks navigation when logged out',
+      (
+      WidgetTester tester,
+    ) async {
+      controller = StubCameraController(
+        repository: repository,
+        initCallback: () async {},
+      );
+      controller.cameraController = cameraController;
+      when(() => cameraController.value).thenReturn(cameraValue);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EquationSolverCameraPage(
+            controller: controller,
+            canAccessChat: () async => false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.widgetWithIcon(IconButton, Icons.question_answer_outlined),
+      );
+      await tester.pump();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(ChatAssistantChatPage), findsNothing);
+      expect(find.text('Faça login para acessar o Killbot.'), findsOneWidget);
+      expect(find.text('Quero me autenticar'), findsOneWidget);
+      expect(find.text('Ok'), findsOneWidget);
+    });
+
+    testWidgets(
+      'tapping authenticate action in chat login-required modal navigates to profile page',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: EquationSolverCameraPage(
+              controller: controller,
+              canAccessChat: () async => false,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.question_answer_outlined),
+        );
+        await tester.pump();
+
+        await tester.tap(find.text('Quero me autenticar'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(ProfilePage), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping Ok in chat login-required modal dismisses dialog and stays on camera',
+      (WidgetTester tester) async {
+        controller = StubCameraController(
+          repository: repository,
+          initCallback: () async {},
+        );
+        controller.cameraController = cameraController;
+        when(() => cameraController.value).thenReturn(cameraValue);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: EquationSolverCameraPage(
+              controller: controller,
+              canAccessChat: () async => false,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.question_answer_outlined),
+        );
+        await tester.pump();
+
+        await tester.tap(find.text('Ok'));
+        await tester.pump();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(ChatAssistantChatPage), findsNothing);
     });
 
     testWidgets(
@@ -550,7 +655,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Meu Perfil'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
       expect(find.byType(ProfilePage), findsOneWidget);
     });

@@ -174,7 +174,7 @@ class EquationSolverCalculatorController {
     solution = null;
     solveError = null;
     try {
-      solution = await _repository!.solveEquation(
+      solution = await _repository.solveEquation(
         equation: expression,
         showSteps: true,
       );
