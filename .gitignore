@@ -18,7 +18,6 @@
 .idea/*
 
 # Visual Studio Code related
-.devcontainer/*
 .classpath
 .project
 .settings/
