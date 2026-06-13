@@ -119,6 +119,36 @@ void main() {
       expect(find.byKey(const Key('chat_change_topic_button')), findsOneWidget);
     });
 
+    testWidgets('scrolls to the latest message after the conversation updates', (tester) async {
+      final repository = FakeChatAssistantRepository(
+        topics: ['Logarithm'],
+        responses: const [
+          ConversationResponse(
+            message: 'Explicacao breve',
+            example: 'Exemplo pratico',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChatAssistantChatPage(equation: '', repository: repository),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('topic_suggestion_Logarithm')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+
+      final listView = tester.widget<ListView>(find.byType(ListView));
+      final scrollController = listView.controller as ScrollController;
+
+      expect(scrollController.hasClients, isTrue);
+      expect(scrollController.position.maxScrollExtent, greaterThanOrEqualTo(0));
+    });
+
     testWidgets('adds only an example when asking for one more', (tester) async {
       final repository = FakeChatAssistantRepository(
         topics: ['Logarithm'],

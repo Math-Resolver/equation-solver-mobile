@@ -178,6 +178,3 @@ Exemplo com latencia variavel (800ms ate 1200ms):
 ```bash
 flutter run --dart-define=USE_API_MOCK=true --dart-define=MOCK_API_LATENCY_MS=800 --dart-define=MOCK_API_LATENCY_JITTER_MS=400
 ```
-
-
-// TODO ALTERAR A MODAL DE ERRO AO ABRIR A CONVERSAR COM O KILLBOT. ESTÁ FORA DOS PADRÕES DO PROJETOZ

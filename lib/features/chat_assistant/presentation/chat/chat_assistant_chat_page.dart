@@ -29,6 +29,7 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
   late final ChatAssistantChatController _controller;
   final Map<int, int> _visibleCharsByMessageIndex = {};
   final List<int> _typingQueue = [];
+  final ScrollController _conversationScrollController = ScrollController();
   Timer? _typingTimer;
   int _typingMessageIndex = -1;
   int _lastMessageCount = 0;
@@ -46,6 +47,7 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
   @override
   void dispose() {
     _stopTypingAnimation();
+    _conversationScrollController.dispose();
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
@@ -55,6 +57,9 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
     _syncTypingAnimationState();
     if (mounted) {
       setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
     }
   }
 
@@ -286,6 +291,7 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
 
   Widget _buildConversationList() {
     return ListView.separated(
+      controller: _conversationScrollController,
       itemCount: _controller.messages.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -308,7 +314,7 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
                   : CrossAxisAlignment.start,
               children: [
                 Text(
-                  isUser ? 'Voce' : 'Killbot',
+                  isUser ? 'Você' : 'Killbot',
                   style: TextStyle(
                     color: isUser ? AppColors.selected : const Color(0xFF486A8A),
                     fontSize: 12,
@@ -338,6 +344,28 @@ class _ChatAssistantChatPageState extends State<ChatAssistantChatPage> {
           ),
         );
       },
+    );
+  }
+
+  void _scrollToBottom() {
+    if (!_conversationScrollController.hasClients) {
+      return;
+    }
+
+    final position = _conversationScrollController.position;
+    if (!position.hasContentDimensions) {
+      return;
+    }
+
+    final target = position.maxScrollExtent;
+    if (target <= position.pixels) {
+      return;
+    }
+
+    _conversationScrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
     );
   }
 

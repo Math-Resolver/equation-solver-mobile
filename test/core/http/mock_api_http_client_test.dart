@@ -77,6 +77,42 @@ void main() {
       expect((data['example'] ?? '').toString().isNotEmpty, isTrue);
     });
 
+    test('POST /v1/conversation returns a short explanation and example for each topic', () async {
+      final client = _client();
+
+      final data = await client.post(
+        '/v1/conversation',
+        data: {'topic': 'Frações'},
+      );
+
+      expect((data['message'] ?? '').toString().toLowerCase(), contains('frações'));
+      final example = (data['example'] ?? '').toString();
+      expect(example, anyOf(contains('1/2'), contains('2/3')));
+      expect(example, isNot(contains('Outro exemplo')));
+    });
+
+    test('POST /v1/conversation returns the first example and then the second example on request', () async {
+      final client = _client();
+
+      final firstResponse = await client.post(
+        '/v1/conversation',
+        data: {'topic': 'Frações'},
+      );
+      final secondResponse = await client.post(
+        '/v1/conversation',
+        data: {'topic': 'Frações'},
+      );
+
+      expect(
+        firstResponse['example'],
+        'Ex.: 1/2 + 1/4 = 3/4, porque juntamos duas partes de tamanhos diferentes e chegamos a três quartos.',
+      );
+      expect(
+        secondResponse['example'],
+        'Ex.: 2/3 - 1/3 = 1/3, porque retiramos uma terça parte de duas terças partes e sobra uma terça parte.',
+      );
+    });
+
     test('POST /v1/equation/solve returns result and steps', () async {
       final client = _client();
 
