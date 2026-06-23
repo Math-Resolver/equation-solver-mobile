@@ -30,3 +30,21 @@ Enter in directory `/packages` and run:
 ```
 flutter create template=package package_name
 ```
+
+
+O mock ja inclui latencia artificial para parecer backend real.
+
+- MOCK_API_LATENCY_MS: latencia base em ms (default: 800)
+- MOCK_API_LATENCY_JITTER_MS: variacao aleatoria em ms (default: 400)
+
+Exemplo com latencia fixa de 800ms:
+
+```bash
+flutter run --dart-define=USE_API_MOCK=true --dart-define=MOCK_API_LATENCY_MS=800 --dart-define=MOCK_API_LATENCY_JITTER_MS=0
+```
+
+Exemplo com latencia variavel (800ms ate 1200ms):
+
+```bash
+flutter run --dart-define=USE_API_MOCK=true --dart-define=MOCK_API_LATENCY_MS=800 --dart-define=MOCK_API_LATENCY_JITTER_MS=400
+```
